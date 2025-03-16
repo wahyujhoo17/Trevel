@@ -135,7 +135,13 @@ export const airlines: Record<string, Airline> = {
   },
   OD: {
     code: "OD",
-    name: "Batik Air",
+    name: "Batik Air Malaysia",
+    alliance: "None",
+    logo: "https://logo.clearbit.com/batikair.com",
+  },
+  ID: {
+    code: "ID",
+    name: "Batik Air Indonesia",
     alliance: "None",
     logo: "https://logo.clearbit.com/batikair.com",
   },
@@ -153,7 +159,19 @@ export const airlines: Record<string, Airline> = {
   },
   AK: {
     code: "AK",
-    name: "AirAsia",
+    name: "AirAsia Malaysia",
+    alliance: "None",
+    logo: "https://logo.clearbit.com/airasia.com",
+  },
+  QZ: {
+    code: "QZ",
+    name: "AirAsia Indonesia",
+    alliance: "None",
+    logo: "https://logo.clearbit.com/airasia.com",
+  },
+  FD: {
+    code: "FD",
+    name: "Thai AirAsia",
     alliance: "None",
     logo: "https://logo.clearbit.com/airasia.com",
   },
@@ -204,6 +222,30 @@ export const airlines: Record<string, Airline> = {
     name: "Norwegian Air",
     alliance: "None",
     logo: "https://logo.clearbit.com/norwegian.com",
+  },
+  QG: {
+    code: "QG",
+    name: "Citilink",
+    alliance: "None",
+    logo: "https://logo.clearbit.com/citilink.co.id",
+  },
+  HO: {
+    code: "HO",
+    name: "Juneyao Airlines",
+    alliance: "None",
+    logo: "https://logo.clearbit.com/juneyaoair.com",
+  },
+  H1: {
+    code: "H1",
+    name: "Hahn Air Systems",
+    alliance: "None",
+    logo: "https://logo.clearbit.com/hahnair.com",
+  },
+  MF: {
+    code: "MF",
+    name: "XiamenAir",
+    alliance: "SkyTeam",
+    logo: "https://logo.clearbit.com/xiamenair.com.cn",
   },
 };
 

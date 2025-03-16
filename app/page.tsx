@@ -19,32 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/navbar";
 import { FlightResults } from "@/components/flight-results";
 import { format } from "date-fns"; // Add this import at the top
-
-const airlines: { [key: string]: string } = {
-  SQ: "Singapore Airlines",
-  TG: "Thai Airways",
-  GA: "Garuda Indonesia",
-  MH: "Malaysia Airlines",
-  PR: "Philippine Airlines",
-  VN: "Vietnam Airlines",
-  QZ: "AirAsia Indonesia",
-  FD: "Thai AirAsia",
-  AK: "AirAsia Malaysia",
-  CX: "Cathay Pacific",
-  TR: "Scoot",
-  "3K": "Jetstar Asia",
-  JT: "Lion Air",
-  ID: "Batik Air",
-  QG: "Citilink",
-  KL: "KLM Royal Dutch",
-  EY: "Etihad Airways",
-  EK: "Emirates",
-  QF: "Qantas",
-};
-
-const getAirlineName = (carrierCode: string): string => {
-  return airlines[carrierCode] || carrierCode;
-};
+import { getAirlineName, getAirlineInfo } from "@/utils/airlines";
 
 const popularDestinations = [
   {
