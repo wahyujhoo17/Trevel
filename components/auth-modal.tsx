@@ -18,6 +18,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { BsApple, BsTwitterX } from "react-icons/bs";
+import { toast } from "sonner";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -74,16 +75,48 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     try {
       if (provider === "google") {
-        await signInWithPopup(auth, googleProvider);
+        // Add popup settings
+        const result = await signInWithPopup(auth, googleProvider).catch((error) => {
+          if (error.code === 'auth/popup-blocked') {
+            toast.error('Popup was blocked', {
+              description: 'Please allow popups for this site and try again'
+            });
+          }
+          throw error;
+        });
+        
+        if (result) {
+          toast.success('Successfully signed in!');
+          onClose();
+        }
       } else if (provider === "twitter") {
-        await signInWithPopup(auth, twitterProvider);
+        const result = await signInWithPopup(auth, twitterProvider).catch((error) => {
+          if (error.code === 'auth/popup-blocked') {
+            toast.error('Popup was blocked', {
+              description: 'Please allow popups for this site and try again'
+            });
+          }
+          throw error;
+        });
+        
+        if (result) {
+          toast.success('Successfully signed in!');
+          onClose();
+        }
       } else if (provider === "apple") {
-        // Apple authentication requires additional setup
-        console.log("Apple authentication not implemented yet");
+        toast.info('Apple sign in coming soon');
       }
-      onClose();
     } catch (error: any) {
-      setError(error.message);
+      console.error('Auth error:', error);
+      
+      // Handle different error cases
+      const errorMessage = error.code === 'auth/popup-closed-by-user'
+        ? 'Sign in was cancelled'
+        : error.code === 'auth/popup-blocked'
+        ? 'Popup was blocked by your browser'
+        : 'Failed to sign in. Please try again.';
+        
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -113,25 +146,37 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               variant="outline"
               onClick={() => handleSocialLogin("google")}
               disabled={isLoading}
-              className="w-full"
+              className="w-full relative"
             >
-              <FcGoogle className="h-5 w-5" />
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <FcGoogle className="h-5 w-5" />
+              )}
             </Button>
             <Button
               variant="outline"
               onClick={() => handleSocialLogin("twitter")}
               disabled={isLoading}
-              className="w-full"
+              className="w-full relative"
             >
-              <BsTwitterX className="h-4 w-4" />
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <BsTwitterX className="h-4 w-4" />
+              )}
             </Button>
             <Button
               variant="outline"
               onClick={() => handleSocialLogin("apple")}
               disabled={isLoading}
-              className="w-full"
+              className="w-full relative"
             >
-              <BsApple className="h-5 w-5" />
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <BsApple className="h-5 w-5" />
+              )}
             </Button>
           </div>
 

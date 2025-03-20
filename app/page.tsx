@@ -20,6 +20,10 @@ import { Navbar } from "@/components/navbar";
 import { FlightResults } from "@/components/flight-results";
 import { format } from "date-fns"; // Add this import at the top
 import { getAirlineName, getAirlineInfo } from "@/utils/airlines";
+import { link } from "node:fs";
+import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation"; // Add this import
+import { toast } from "sonner"; // Add toast import if not already present
 
 const popularDestinations = [
   {
@@ -96,13 +100,14 @@ export default function Home() {
   const [flights, setFlights] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const router = useRouter(); // Add this
 
   const handlePlanningClick = () => {
     if (!user) {
       setShowAuthModal(true);
     } else {
-      // Handle navigation or other actions for logged-in users
-      console.log("User is logged in, proceed with planning");
+      // Use Next.js router instead of window.location
+      router.push("/my-plan");
     }
   };
 
@@ -112,11 +117,24 @@ export default function Home() {
       return;
     }
 
-    if (!origin || !destination || !date.from) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
+    // Check for missing inputs and show specific notifications
+    if (!origin) {
+      toast.error("Missing departure city", {
+        description: "Please select where you're flying from",
+      });
+      return;
+    }
+
+    if (!destination) {
+      toast.error("Missing destination", {
+        description: "Please select where you're flying to",
+      });
+      return;
+    }
+
+    if (!date.from) {
+      toast.error("Missing travel dates", {
+        description: "Please select when you want to travel",
       });
       return;
     }
@@ -264,7 +282,6 @@ export default function Home() {
             <Button
               className="h-full bg-primary hover:bg-primary/90"
               onClick={handleSearch}
-              disabled={isSearching}
             >
               {isSearching ? (
                 <div className="flex items-center">
@@ -273,7 +290,8 @@ export default function Home() {
                 </div>
               ) : (
                 <>
-                  <PlanePilot className="mr-2" /> Search
+                  <PlanePilot className="mr-2" />
+                  Search
                 </>
               )}
             </Button>

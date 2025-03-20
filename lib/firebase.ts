@@ -7,6 +7,7 @@ import {
   browserLocalPersistence,
 } from "firebase/auth";
 import { Analytics, getAnalytics } from "firebase/analytics";
+import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -24,6 +25,7 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Auth with popup redirect resolver
 export const auth = getAuth(app);
+export const db = getDatabase(app);
 
 // Set persistence only on client side
 if (typeof window !== "undefined") {

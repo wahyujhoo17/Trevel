@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Loader2, Plane, Clock, Calendar } from "lucide-react";
+import { Loader2, Plane, Clock, Calendar, Luggage } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getAirlineInfo, getAirlineName } from "@/utils/airlines";
 import Image from "next/image";
@@ -8,6 +8,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useRef } from "react";
 import { locations } from "@/data/locations";
 import { convertCurrency, formatCurrency } from "@/utils/currency";
+import { FlightDetailModal } from "./flight-detail-modal";
+import { toast } from "sonner";
+import { db, auth } from "@/lib/firebase";
+import { ref, push, set } from "firebase/database";
+// ...or for Firestore
+// import { collection, addDoc } from "firebase/firestore";
 
 interface Flight {
   id: string;
@@ -125,6 +131,7 @@ export function FlightResults({
     "EUR" | "USD" | "IDR"
   >("IDR");
   const resultsRef = useRef<HTMLDivElement>(null);
+  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
 
   // Calculate pagination
   const indexOfLastFlight = currentPage * flightsPerPage;
@@ -153,9 +160,19 @@ export function FlightResults({
     }
   };
 
-  const formatLocation = (code: string) => {
+  const formatLocation = (code: string, isModal = false) => {
     const location = locations.find((loc) => loc.code === code);
-    return location ? `${location.name} (${code})` : code;
+    if (!location) return code;
+
+    const name = location.name;
+    // Only truncate in modal view
+    if (isModal) {
+      const truncatedName =
+        name.length > 20 ? `${name.substring(0, 20)}...` : name;
+      return `${truncatedName} (${code})`;
+    }
+    // Show full name in results view
+    return `${name} (${code})`;
   };
 
   const displayPrice = (price: number | string, originalCurrency: string) => {
@@ -172,6 +189,57 @@ export function FlightResults({
       selectedCurrency
     );
     return formatCurrency(convertedAmount, selectedCurrency);
+  };
+
+  const handleAddToPlan = async (flightId: string, quantity: number) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        toast.error("Please login to add flights to your plan");
+        return;
+      }
+
+      const flight = flights.find((f) => f.id === flightId);
+      if (!flight) {
+        toast.error("Flight not found");
+        return;
+      }
+
+      const planItem = {
+        userId: user.uid,
+        flightId,
+        quantity,
+        flight: {
+          id: flight.id,
+          airline: flight.airline,
+          flightNumber: flight.flightNumber,
+          origin: flight.origin,
+          destination: flight.destination,
+          departureDate: flight.departureDate,
+          departureTime: flight.departureTime,
+          arrivalTime: flight.arrivalTime,
+          price: flight.price,
+          currency: flight.currency,
+          cabin: flight.cabin,
+          baggage: flight.baggage,
+        },
+        dateAdded: new Date().toISOString(),
+        status: "active",
+      };
+
+      const plansRef = ref(db, `plans/${user.uid}`);
+      const newPlanRef = push(plansRef);
+      await set(newPlanRef, planItem);
+
+      toast.success("Flight added to plan", {
+        description: `${quantity} ticket(s) added to your travel plan`,
+      });
+    } catch (error) {
+      console.error("Error adding plan:", error);
+      toast.error("Failed to add to plan", {
+        description: "Please try again later",
+      });
+    }
   };
 
   if (isLoading) {
@@ -225,7 +293,8 @@ export function FlightResults({
       {currentFlights.map((flight) => (
         <Card
           key={flight.id}
-          className="p-3 md:p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary bg-white"
+          className="p-3 md:p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary bg-white cursor-pointer"
+          onClick={() => setSelectedFlight(flight)}
         >
           <MobileFlightCard
             flight={flight}
@@ -295,45 +364,6 @@ export function FlightResults({
               </div>
             </div>
 
-            {/* Flight badges section */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              <Badge
-                variant="outline"
-                className="bg-blue-50 text-xs md:text-sm"
-              >
-                <Calendar className="h-3 w-3 mr-1" />
-                {flight.departureDate}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="bg-purple-50 text-xs md:text-sm"
-              >
-                {flight.cabin}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="bg-green-50 text-xs md:text-sm"
-              >
-                {flight.numberOfBookableSeats} seats
-              </Badge>
-              {flight.terminal && (
-                <Badge
-                  variant="outline"
-                  className="bg-orange-50 text-xs md:text-sm hidden md:inline-flex"
-                >
-                  Terminal {flight.terminal}
-                </Badge>
-              )}
-              {flight.baggage && (
-                <Badge
-                  variant="outline"
-                  className="bg-yellow-50 text-xs md:text-sm hidden md:inline-flex"
-                >
-                  {flight.baggage}
-                </Badge>
-              )}
-            </div>
-
             {/* Flight details section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-6 gap-4 md:gap-0">
               <div className="flex-1">
@@ -345,7 +375,7 @@ export function FlightResults({
                 </div>
                 <div className="ml-6">
                   <p className="text-xs md:text-sm font-medium text-gray-800">
-                    {formatLocation(flight.origin)}
+                    {formatLocation(flight.origin, false)}
                   </p>
                   {flight.terminal && (
                     <p className="text-xs text-gray-500 hidden md:block">
@@ -378,7 +408,7 @@ export function FlightResults({
                 </div>
                 <div>
                   <p className="text-xs md:text-sm font-medium text-gray-800">
-                    {formatLocation(flight.destination)}
+                    {formatLocation(flight.destination, false)}
                   </p>
                   {flight.terminal && (
                     <p className="text-xs text-gray-500 hidden md:block">
@@ -391,6 +421,18 @@ export function FlightResults({
           </div>
         </Card>
       ))}
+
+      {/* Add the modal */}
+      {selectedFlight && (
+        <FlightDetailModal
+          flight={selectedFlight}
+          isOpen={!!selectedFlight}
+          onClose={() => setSelectedFlight(null)}
+          displayPrice={displayPrice}
+          formatLocation={formatLocation}
+          onAddToPlan={handleAddToPlan}
+        />
+      )}
 
       {/* Update pagination for mobile */}
       {totalPages > 1 && (
