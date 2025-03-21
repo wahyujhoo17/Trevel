@@ -32,7 +32,8 @@ export function MyPlanContent() {
 
   const groupPlansByCity = (plans: PlanItem[]) => {
     const groups = plans.reduce((acc: { [key: string]: CityGroup }, plan) => {
-      const destination = plan.flight.destination;
+      const destination =
+        plan.flight?.destination || plan.hotel?.city || plan.car?.location;
       if (!acc[destination]) {
         acc[destination] = {
           city: formatLocation(destination).split(" (")[0],
@@ -42,7 +43,11 @@ export function MyPlanContent() {
           cars: [],
         };
       }
-      acc[destination].flights.push(plan);
+
+      if (plan.flight) acc[destination].flights.push(plan);
+      if (plan.hotel) acc[destination].hotels.push(plan);
+      if (plan.car) acc[destination].cars.push(plan);
+
       return acc;
     }, {});
     return Object.values(groups);
@@ -186,20 +191,29 @@ export function MyPlanContent() {
       </div>
 
       <Tabs defaultValue="flights" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
-          <TabsTrigger value="flights" className="flex items-center gap-2 py-3">
+        <TabsList className="relative grid w-full grid-cols-3 lg:w-[600px]">
+          <TabsTrigger
+            value="flights"
+            className="flex items-center gap-2 py-3 border-b-2 border-transparent data-[state=active]:border-primary"
+          >
             <Plane className="h-5 w-5" />
             <span className="hidden md:inline text-base font-medium">
               Flights
             </span>
           </TabsTrigger>
-          <TabsTrigger value="hotels" className="flex items-center gap-2 py-3">
+          <TabsTrigger
+            value="hotels"
+            className="flex items-center gap-2 py-3 border-b-2 border-transparent data-[state=active]:border-primary"
+          >
             <Hotel className="h-5 w-5" />
             <span className="hidden md:inline text-base font-medium">
               Hotels
             </span>
           </TabsTrigger>
-          <TabsTrigger value="cars" className="flex items-center gap-2 py-3">
+          <TabsTrigger
+            value="cars"
+            className="flex items-center gap-2 py-3 border-b-2 border-transparent data-[state=active]:border-primary"
+          >
             <Car className="h-5 w-5" />
             <span className="hidden md:inline text-base font-medium">
               Car Rental
@@ -218,11 +232,23 @@ export function MyPlanContent() {
         </TabsContent>
 
         <TabsContent value="hotels" className="mt-6">
-          <HotelPlans renderEmptySection={renderEmptySection} />
+          {renderCityFilter()}
+          <HotelPlans
+            cityGroups={cityGroups}
+            selectedCity={selectedCity}
+            onRemovePlan={handleRemovePlan}
+            renderEmptySection={renderEmptySection}
+          />
         </TabsContent>
 
         <TabsContent value="cars" className="mt-6">
-          <CarPlans renderEmptySection={renderEmptySection} />
+          {renderCityFilter()}
+          <CarPlans
+            cityGroups={cityGroups}
+            selectedCity={selectedCity}
+            onRemovePlan={handleRemovePlan}
+            renderEmptySection={renderEmptySection}
+          />
         </TabsContent>
       </Tabs>
     </div>

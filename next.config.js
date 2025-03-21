@@ -1,16 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone", // Ubah dari "export" ke "standalone"
-  eslint: {
-    ignoreDuringBuilds: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+      }
+    ],
   },
-  images: { unoptimized: true },
-  webpack: (config, { isServer }) => {
-    config.snapshot = {
-      ...config.snapshot,
-      managedPaths: [new RegExp(`^(.+?[\\/]node_modules[\\/])`)]
-    };
-    return config;
+  async rewrites() {
+    return [
+      {
+        source: '/api/destinations',
+        destination: 'https://serpapi.com/search.json'
+      }
+    ];
   }
 };
 

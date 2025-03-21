@@ -36,3 +36,4 @@ next-env.d.ts
 
 # ...existing entries...
 .env.local
+/cache

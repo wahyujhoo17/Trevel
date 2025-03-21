@@ -9,8 +9,10 @@ import {
   Calendar,
   Activity,
   Loader2,
+  Star,
+  DollarSign,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { PlaceSearch } from "@/components/place-search";
@@ -24,72 +26,9 @@ import { link } from "node:fs";
 import { useNavigate } from "react-router-dom";
 import { useRouter } from "next/navigation"; // Add this import
 import { toast } from "sonner"; // Add toast import if not already present
-
-const popularDestinations = [
-  {
-    id: 1,
-    name: "Bali, Indonesia",
-    image:
-      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800",
-    description: "Experience paradise with pristine beaches and rich culture",
-  },
-  {
-    id: 2,
-    name: "Bangkok, Thailand",
-    image:
-      "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&q=80&w=800",
-    description: "Vibrant city life meets ancient temples",
-  },
-  {
-    id: 3,
-    name: "Ha Long Bay, Vietnam",
-    image:
-      "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&q=80&w=800",
-    description: "Stunning limestone islands in emerald waters",
-  },
-  {
-    id: 4,
-    name: "Lombok, Indonesia",
-    image:
-      "https://images.unsplash.com/photo-1571366343168-631c5bcca7a4?auto=format&fit=crop&q=80&w=800",
-    description: "Pristine beaches, majestic waterfalls, and Mount Rinjani",
-  },
-  {
-    id: 5,
-    name: "Palawan, Philippines",
-    image:
-      "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&q=80&w=800",
-    description: "Crystal clear lagoons and hidden beaches",
-  },
-  {
-    id: 6,
-    name: "Singapore",
-    image:
-      "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&q=80&w=800",
-    description: "Modern architecture meets lush gardens",
-  },
-  {
-    id: 7,
-    name: "Kuala Lumpur, Malaysia",
-    image:
-      "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&q=80&w=800",
-    description: "Iconic towers and diverse culinary scene",
-  },
-  {
-    id: 8,
-    name: "Chiang Mai, Thailand",
-    image:
-      "https://images.unsplash.com/photo-1504214208698-ea1916a2195a?auto=format&fit=crop&q=80&w=800",
-    description: "Ancient temples and mountain landscapes",
-  },
-  {
-    id: 9,
-    name: "Boracay, Philippines",
-    image:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=800",
-    description: "White sand beaches and turquoise waters",
-  },
-];
+import { Badge } from "@/components/ui/badge";
+import { Plane, Hotel, ExternalLink } from "lucide-react";
+import { locations } from "@/data/locations"; // First, import the locations data
 
 export default function Home() {
   const [origin, setOrigin] = useState("SIN");
@@ -101,6 +40,37 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const router = useRouter(); // Add this
+  const [destinations, setDestinations] = useState([]);
+  const [isLoadingDestinations, setIsLoadingDestinations] = useState(true);
+
+  useEffect(() => {
+    const fetchDestinations = async () => {
+      try {
+        setIsLoadingDestinations(true);
+        const response = await fetch("/api/destinations");
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("API Error:", errorData);
+          throw new Error(errorData.error || "Failed to fetch destinations");
+        }
+
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid response format");
+        }
+
+        setDestinations(data);
+      } catch (error) {
+        console.error("Fetch error:", error);
+        toast.error("Failed to load destinations. Please try again later.");
+      } finally {
+        setIsLoadingDestinations(false);
+      }
+    };
+
+    fetchDestinations();
+  }, []);
 
   const handlePlanningClick = () => {
     if (!user) {
@@ -228,6 +198,123 @@ export default function Home() {
     }
   };
 
+  const renderDestinations = () => {
+    if (isLoadingDestinations) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[...Array(9)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-200 h-64 rounded-lg"></div>
+              <div className="mt-4 space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {destinations.map((destination) => (
+          <Card
+            key={destination.id}
+            className="group overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
+          >
+            <div className="relative h-48">
+              <Image
+                src={destination.image}
+                alt={destination.name}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                priority
+              />
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {destination.name}
+                </h3>
+                <div className="flex items-center text-sm text-gray-600 mt-1">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  <span>{destination.location}</span>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {destination.description}
+              </p>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center text-primary">
+                    <Plane className="w-4 h-4 mr-1" />
+                    <span>Flight</span>
+                  </div>
+                  <Badge variant="secondary" className="font-medium">
+                    {destination.prices.flight.amount}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center text-primary">
+                    <Hotel className="w-4 h-4 mr-1" />
+                    <span>Hotel</span>
+                  </div>
+                  <Badge variant="secondary" className="font-medium">
+                    {destination.prices.hotel.amount}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-2">
+                <Button
+                  className="flex-1 bg-primary text-white hover:bg-primary/90"
+                  onClick={() => {
+                    // Find the matching location data
+                    const locationData = locations.find(
+                      (loc) =>
+                        loc.city
+                          .toLowerCase()
+                          .includes(destination.name.toLowerCase()) ||
+                        loc.name
+                          .toLowerCase()
+                          .includes(destination.name.toLowerCase())
+                    );
+
+                    if (locationData) {
+                      // Set the destination to the airport code
+                      setDestination(locationData.code);
+                      // Scroll to search section
+                      document
+                        .getElementById("search-section")
+                        ?.scrollIntoView({
+                          behavior: "smooth",
+                        });
+                    } else {
+                      toast.error("Airport not found for this destination");
+                    }
+                  }}
+                >
+                  Select
+                </Button>
+                <Button
+                  variant="outline"
+                  className="px-3"
+                  onClick={() => window.open(destination.link, "_blank")}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <main className="min-h-screen">
       <Navbar user={user} />
@@ -258,7 +345,10 @@ export default function Home() {
         </div>
       </div>
       {/* Search Section */}
-      <section className="max-w-6xl mx-auto -mt-20 relative z-20 px-4">
+      <section
+        id="search-section"
+        className="max-w-6xl mx-auto -mt-20 relative z-20 px-4"
+      >
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
@@ -311,29 +401,7 @@ export default function Home() {
       {/* Popular Destinations */}
       <section className="max-w-6xl mx-auto py-20 px-4">
         <h2 className="text-3xl font-bold mb-8">Popular Destinations</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {popularDestinations.map((destination) => (
-            <Card
-              key={destination.id}
-              className="overflow-hidden group cursor-pointer"
-            >
-              <div className="relative h-64">
-                <Image
-                  src={destination.image}
-                  alt={destination.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-              <div className="p-4">
-                <h3 className="text-xl font-semibold mb-2">
-                  {destination.name}
-                </h3>
-                <p className="text-gray-600">{destination.description}</p>
-              </div>
-            </Card>
-          ))}
-        </div>
+        {renderDestinations()}
       </section>
 
       {/* Add Copyright Section */}

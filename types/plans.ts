@@ -14,6 +14,12 @@ export interface CityGroup {
   city: string;
   code: string;
   flights: PlanItem[];
-  hotels?: any[]; // Add proper type when implemented
-  cars?: any[]; // Add proper type when implemented
+  hotels: PlanItem[];
+  cars: PlanItem[];
+}
+
+export interface Flight {
+  // ... existing properties ...
+  price: number;
+  currency: string;
 }
