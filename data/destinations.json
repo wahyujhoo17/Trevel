@@ -1,0 +1,167 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Bali",
+      "description": "Beach, honeymoon, surfing, rafting and temple",
+      "image": "https://c1.wallpaperflare.com/preview/262/812/847/travel-outdoors-girl-landscape.jpg",
+      "location": "Bali",
+      "prices": {
+        "flight": {
+          "amount": "Price on request",
+          "extracted": null
+        },
+        "hotel": {
+          "amount": "$44",
+          "extracted": 44
+        }
+      },
+      "link": "https://www.google.com/search?num=9&sca_esv=a7e19c87745cb1b1&gl=sg&hl=en&q=Bali&si=APYL9btZkf4kdGhzReFKIi4_F4HlfAbNt65clXF8w4EPLuE33qYfC0s8q_RBplOiAE5ShcfvtDK4db4Uzl4RX0vQa2Ekfxfwog%3D%3D&sa=X&ved=2ahUKEwi-_YaS4ZqMAxXYTDABHfNbN3UQs4ILegQILhAD"
+    },
+    {
+      "id": 2,
+      "name": "Bangkok",
+      "description": "Grand Palace, Wat Phra Kaew & nightlife",
+      "image": "https://c0.wallpaperflare.com/preview/486/565/245/bangkok-thailand-travel-building.jpg",
+      "location": "Bangkok",
+      "prices": {
+        "flight": {
+          "amount": "Price on request",
+          "extracted": null
+        },
+        "hotel": {
+          "amount": "$41",
+          "extracted": 41
+        }
+      },
+      "link": "https://www.google.com/search?num=9&sca_esv=a7e19c87745cb1b1&gl=sg&hl=en&q=Bangkok&si=APYL9bu1Sl4M4TWndGcDs6ZL5WJXWNYEL_kgEEwAe0iMZIocdWTPRjRILJlb_Qst5CR5RQ9WyVWUfKVgxynRRTSID4SgpYYvLg%3D%3D&sa=X&ved=2ahUKEwi-_YaS4ZqMAxXYTDABHfNbN3UQs4ILegQIMhAD"
+    },
+    {
+      "id": 3,
+      "name": "Federal Territory of Kuala Lumpur",
+      "description": "Petronas Twin Towers, shopping & dining",
+      "image": "https://c1.wallpaperflare.com/preview/884/129/196/kong-kuala-city-view-from-tv-tower.jpg",
+      "location": "Federal Territory of Kuala Lumpur",
+      "prices": {
+        "flight": {
+          "amount": "Price on request",
+          "extracted": null
+        },
+        "hotel": {
+          "amount": "$38",
+          "extracted": 38
+        }
+      },
+      "link": "https://www.google.com/search?num=9&sca_esv=a7e19c87745cb1b1&gl=sg&hl=en&q=Federal+Territory+of+Kuala+Lumpur&si=APYL9bu1Sl4M4TWndGcDs6ZL5WJXWNYEL_kgEEwAe0iMZIocddm6piBDXNmB8Q3VTU4r_IsVRNCOVdjGvZyb7fwEdmq8Av-DEA%3D%3D&sa=X&ved=2ahUKEwi-_YaS4ZqMAxXYTDABHfNbN3UQs4ILegQIMBAD"
+    },
+    {
+      "id": 4,
+      "name": "Hanoi",
+      "description": "Bach Ma Temple & Đồng Xuân Market",
+      "image": "https://c0.wallpaperflare.com/preview/354/115/590/person-human-transportation-railway.jpg",
+      "location": "Hanoi",
+      "prices": {
+        "flight": {
+          "amount": "Price on request",
+          "extracted": null
+        },
+        "hotel": {
+          "amount": "$53",
+          "extracted": 53
+        }
+      },
+      "link": "https://www.google.com/search?num=9&sca_esv=a7e19c87745cb1b1&gl=sg&hl=en&q=Hanoi&si=APYL9bu1Sl4M4TWndGcDs6ZL5WJXWNYEL_kgEEwAe0iMZIocdTJz4dLZiePsZbER00WnKwxNa2qENCdeJYIyn02VG8wkYTkNTQ%3D%3D&sa=X&ved=2ahUKEwi-_YaS4ZqMAxXYTDABHfNbN3UQs4ILegQIMRAD"
+    },
+    {
+      "id": 5,
+      "name": "Ho Chi Minh City",
+      "description": "Vietnam war, nightlife, opera house, literature and backpacking",
+      "image": "https://c0.wallpaperflare.com/preview/337/153/265/vietnam-ho-chi-minh-city-city-skycrapper.jpg",
+      "location": "Ho Chi Minh City",
+      "prices": {
+        "flight": {
+          "amount": "Price on request",
+          "extracted": null
+        },
+        "hotel": {
+          "amount": "$49",
+          "extracted": 49
+        }
+      },
+      "link": "https://www.google.com/search?num=9&sca_esv=a7e19c87745cb1b1&gl=sg&hl=en&q=Ho+Chi+Minh+City&si=APYL9bu1Sl4M4TWndGcDs6ZL5WJXWNYEL_kgEEwAe0iMZIocdThg8GsJ6GVBXmVLYtd921-sCnfR7QqnuEcsFV19vkpKxF7Owg%3D%3D&sa=X&ved=2ahUKEwi-_YaS4ZqMAxXYTDABHfNbN3UQs4ILegQIHRAD"
+    },
+    {
+      "id": 6,
+      "name": "Chiang Mai",
+      "description": "Wat Chedi Luang & Thai handicrafts",
+      "image": "https://get.pxhere.com/photo/landscape-nature-sky-sunlight-building-palace-summer-travel-religion-garden-tourism-place-of-worship-thailand-flowers-outdoors-clouds-temple-shrine-pagoda-wat-spirituality-chiang-mai-hindu-temple-historic-site-492231.jpg",
+      "location": "Chiang Mai",
+      "prices": {
+        "flight": {
+          "amount": "Price on request",
+          "extracted": null
+        },
+        "hotel": {
+          "amount": "$38",
+          "extracted": 38
+        }
+      },
+      "link": "https://www.google.com/search?num=9&sca_esv=a7e19c87745cb1b1&gl=sg&hl=en&q=Chiang+Mai&si=APYL9btMsmZl0P9CyeA1NmMZFYv4xkDb-_Q4WCJadY9pxozSRdNCOSJ3Skiv61LY8uBVxkLdfX2R-n5II0ozKFvjueXgWQcfsA%3D%3D&sa=X&ved=2ahUKEwi-_YaS4ZqMAxXYTDABHfNbN3UQs4ILegQIHBAD"
+    },
+    {
+      "id": 7,
+      "name": "Phuket",
+      "description": "Chinpracha mansion & Thai Hua Museum",
+      "image": "https://get.pxhere.com/photo/see-sky-beauty-nature-blue-clear-sky-famous-place-thailand-phuket-maya-bay-phi-phi-islands-south-asia-asia-island-journey-landscape-beautiful-amazing-outdoors-photography-the-relaxation-scenics-summer-tourism-tourist-travel-tropical-climate-vacations-travel-destinations-woman-girl-standing-young-girl-ginger-read-head-wet-human-body-bikini-1369393.jpg",
+      "location": "Phuket",
+      "prices": {
+        "flight": {
+          "amount": "Price on request",
+          "extracted": null
+        },
+        "hotel": {
+          "amount": "$42",
+          "extracted": 42
+        }
+      },
+      "link": "https://www.google.com/search?num=9&sca_esv=a7e19c87745cb1b1&gl=sg&hl=en&q=Phuket&si=APYL9btMsmZl0P9CyeA1NmMZFYv4xkDb-_Q4WCJadY9pxozSRY0yahg1R77ELKPlcrovUtLsv1BJ1DgYWjMNrlj3ek5rpiyAnA%3D%3D&sa=X&ved=2ahUKEwi-_YaS4ZqMAxXYTDABHfNbN3UQs4ILegQIGxAD"
+    },
+    {
+      "id": 8,
+      "name": "Hội An",
+      "description": "Ancient Town, beaches & ceramics",
+      "image": "https://c0.wallpaperflare.com/preview/299/454/390/vietnam-h%E1%BB%99i-an-old-street-hoi-an.jpg",
+      "location": "Hội An",
+      "prices": {
+        "flight": {
+          "amount": "Price on request",
+          "extracted": null
+        },
+        "hotel": {
+          "amount": "$37",
+          "extracted": 37
+        }
+      },
+      "link": "https://www.google.com/search?num=9&sca_esv=a7e19c87745cb1b1&gl=sg&hl=en&q=H%E1%BB%99i+An&si=APYL9btMsmZl0P9CyeA1NmMZFYv4xkDb-_Q4WCJadY9pxozSRQQtLSG8TUADseill7XDCvW-xSbMy4BJWJMW4epA31sypHuHyQ%3D%3D&sa=X&ved=2ahUKEwi-_YaS4ZqMAxXYTDABHfNbN3UQs4ILegQIGhAD"
+    },
+    {
+      "id": 9,
+      "name": "Hạ Long Bay",
+      "description": "Rocky islands, junk boats & Đầu Gỗ Cave",
+      "image": "https://get.pxhere.com/photo/asia-water-vietnam-island-landscape-rock-bay-halong-nature-mountain-vacation-tourism-seascape-ocean-indochina-sea-travel-limestone-blue-cruise-southeast-view-vietnamese-destination-scenic-asian-tourist-unesco-sky-background-famous-tropical-stone-landmark-holiday-beautiful-cliff-long-green-south-ha-isle-outdoor-tour-heritage-body-of-water-natural-landscape-coastal-and-oceanic-landforms-islet-tropics-promontory-coast-cloud-formation-mount-scenery-lagoon-archipelago-photography-klippe-leisure-bight-inlet-headland-hill-cove-sound-1606592.jpg",
+      "location": "Hạ Long Bay",
+      "prices": {
+        "flight": {
+          "amount": "Price on request",
+          "extracted": null
+        },
+        "hotel": {
+          "amount": "$43",
+          "extracted": 43
+        }
+      },
+      "link": "https://www.google.com/search?num=9&sca_esv=a7e19c87745cb1b1&gl=sg&hl=en&q=H%E1%BA%A1+Long+Bay&si=APYL9btMsmZl0P9CyeA1NmMZFYv4xkDb-_Q4WCJadY9pxozSRVQS0CaO3pZ298MRhoiWyUg2m54pMN1jX4K5H5-1ZIujtjMfVQ%3D%3D&sa=X&ved=2ahUKEwi-_YaS4ZqMAxXYTDABHfNbN3UQs4ILegQIGRAD"
+    }
+  ],
+  "timestamp": 1742546245134
+}

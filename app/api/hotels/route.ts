@@ -98,11 +98,17 @@ function generateMockHotels(city: string, code: string) {
       id: `${code}-1`,
       name: `${city} Grand Hotel`,
       description: `Luxury hotel in the heart of ${city}`,
-      price: Math.floor(Math.random() * 200) + 100,
-      rating: (Math.random() * 2 + 3).toFixed(1),
-      image: "/images/hotel-placeholder.jpg",
+      rate_per_night: "$" + Math.floor(Math.random() * 10) + 100,
+      overall_rating: (Math.random() * 2 + 3).toFixed(1),
+      check_in_time: "12:00AM",
+      check_out_time: "15:00PM",
+      reviews: Math.floor(Math.random() * 1000),
+      city: city,
+      code: code,
+      images: [
+        "https://images.trvl-media.com/lodging/2000000/1110000/1102000/1101942/b2b0dad6.jpg?impolicy=resizecrop&rw=575&rh=575&ra=fill",
+      ],
       amenities: ["WiFi", "Pool", "Spa", "Restaurant"],
     },
-    // Add more mock hotels as needed
   ];
 }
