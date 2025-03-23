@@ -27,6 +27,7 @@ import { HotelDetailModal } from "@/components/hotel-detail-modal";
 import { Hotel } from "@/types/hotel";
 import { DateRange as DayPickerRange } from "react-day-picker";
 import { CustomDateRange } from "@/types/date";
+import { locations } from "@/data/locations";
 
 // Remove the local DateRange interface since we're importing CustomDateRange
 
@@ -131,8 +132,16 @@ export default function HotelsPage() {
       setIsSearching(true);
       setHasSearched(true);
 
+      // Find the location object that matches the destination
+      const locationInfo = locations.find(
+        (loc) => loc.code === destination || loc.city === destination
+      );
+
+      // Use the city name if found, otherwise use the original destination
+      const cityName = locationInfo ? locationInfo.city : destination;
+
       const params = new URLSearchParams({
-        destination,
+        destination: cityName,
         checkIn: format(date.from!, "yyyy-MM-dd"),
         checkOut: format(date.to!, "yyyy-MM-dd"),
         adults: guestDetails.adults.toString(),
@@ -143,10 +152,10 @@ export default function HotelsPage() {
         params.append("children_ages", guestDetails.childrenAges.join(","));
       }
 
+      // console.log("Search params:", params.toString());
+      // const response = {} as Response;
       const response = await fetch(`/api/hotels?${params}`);
       const data = await response.json();
-
-      // console.log("Search response:", data); // Debug log
 
       if (response.ok) {
         if (Array.isArray(data.hotels)) {
@@ -243,7 +252,6 @@ export default function HotelsPage() {
             {/* Destination */}
             <div className="space-y-2">
               <label className="flex items-center text-sm font-medium text-gray-700">
-                <MapPin className="h-4 w-4 mr-2 text-primary" />
                 Destination
               </label>
               <PlaceSearch
@@ -257,7 +265,6 @@ export default function HotelsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-700">
-                  <Calendar className="h-4 w-4 mr-2 text-primary" />
                   Check-in - Check-out
                 </label>
                 <DatePickerWithRange date={date} setDate={handleDateChange} />
@@ -265,7 +272,6 @@ export default function HotelsPage() {
 
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-700">
-                  <Users className="h-4 w-4 mr-2 text-primary" />
                   Guests
                 </label>
                 <GuestInput value={guestDetails} onChange={setGuestDetails} />

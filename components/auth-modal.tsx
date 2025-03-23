@@ -214,8 +214,28 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     return true;
   };
 
+  // Add reset function
+  const resetModal = () => {
+    setIsLogin(true);
+    setIsLoading(false);
+    setError(null);
+    setFormData({
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
+    // Clear any existing toasts
+    toast.dismiss();
+  };
+
+  // Create handleClose function to combine reset and onClose
+  const handleClose = () => {
+    resetModal();
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
@@ -422,7 +442,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   setIsLogin(!isLogin);
                   setError(null);
                   setFormData({
-                    email: formData.email, // Keep email for convenience
+                    email: "", // Clear email too for complete reset
                     password: "",
                     confirmPassword: "",
                   });
