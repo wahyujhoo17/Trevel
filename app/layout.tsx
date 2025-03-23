@@ -8,8 +8,35 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Travel App",
-  description: "Your travel planning companion",
+  title: "Travel Planner",
+  description: "Plan your next adventure",
+  icons: {
+    icon: [
+      {
+        url: "/icons/icon.png",
+        sizes: "16x16",
+        type: "image/png",
+      },
+      {
+        url: "/icons/icon.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        url: "/icons/icon.png",
+        sizes: "48x48",
+        type: "image/x-icon",
+      },
+    ],
+    apple: [
+      {
+        url: "/icons/icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

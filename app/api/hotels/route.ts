@@ -35,11 +35,17 @@ dotenv.config();
 
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
-if (!SERPAPI_KEY) {
-  throw new Error("SERPAPI_KEY is not defined in environment variables");
-}
-
 export async function GET(req: Request) {
+  const serpApiKey = process.env.SERPAPI_KEY;
+
+  if (!serpApiKey) {
+    console.error("SERPAPI_KEY is not defined in environment variables");
+    return NextResponse.json(
+      { error: "API configuration error" },
+      { status: 500 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const destination = searchParams.get("destination");
