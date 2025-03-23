@@ -23,24 +23,29 @@ import { FlightResults } from "@/components/flight-results";
 import { format } from "date-fns"; // Add this import at the top
 import { getAirlineName, getAirlineInfo } from "@/utils/airlines";
 import { link } from "node:fs";
-import { useNavigate } from "react-router-dom";
 import { useRouter } from "next/navigation"; // Add this import
 import { toast } from "sonner"; // Add toast import if not already present
 import { Badge } from "@/components/ui/badge";
 import { Plane, Hotel, ExternalLink } from "lucide-react";
 import { locations } from "@/data/locations"; // First, import the locations data
+import { Destination } from "@/types/destination";
+import { DateRange } from "react-day-picker";
+import { CustomDateRange, DateRangeProps } from "@/types/date";
 
 export default function Home() {
   const [origin, setOrigin] = useState("SIN");
   const [destination, setDestination] = useState("");
-  const [date, setDate] = useState({ from: undefined, to: undefined });
+  const [date, setDate] = useState<CustomDateRange>({
+    from: undefined,
+    to: undefined,
+  });
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
   const [flights, setFlights] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const router = useRouter(); // Add this
-  const [destinations, setDestinations] = useState([]);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
   const [isLoadingDestinations, setIsLoadingDestinations] = useState(true);
 
   useEffect(() => {
@@ -60,7 +65,7 @@ export default function Home() {
           throw new Error("Invalid response format");
         }
 
-        setDestinations(data);
+        setDestinations(data as Destination[]);
       } catch (error) {
         console.error("Fetch error:", error);
         toast.error("Failed to load destinations. Please try again later.");
@@ -120,14 +125,20 @@ export default function Home() {
         returnDate: date.to ? format(date.to, "yyyy-MM-dd") : undefined,
       });
 
+      // Create params object first
+      const params: Record<string, string> = {
+        origin,
+        destination,
+        departureDate: format(date.from!, "yyyy-MM-dd"),
+      };
+
+      // Add returnDate only if date.to exists
+      if (date.to) {
+        params.returnDate = format(date.to, "yyyy-MM-dd");
+      }
+
       const response = await fetch(
-        `/api/flights?` +
-          new URLSearchParams({
-            origin,
-            destination,
-            departureDate: format(date.from, "yyyy-MM-dd"),
-            ...(date.to && { returnDate: format(date.to, "yyyy-MM-dd") }),
-          })
+        `/api/flights?${new URLSearchParams(params)}`
       );
 
       if (!response.ok) {
@@ -187,14 +198,26 @@ export default function Home() {
       setFlights(transformedFlights);
     } catch (error) {
       console.error("Error searching flights:", error);
-      toast({
-        title: "Error",
-        description: "Failed to search flights. Please try again.",
-        variant: "destructive",
+      toast.error("Failed to search flights", {
+        description: "Please try again.",
       });
       setFlights([]);
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleDateChange = (newDate: DateRange | undefined) => {
+    if (newDate) {
+      setDate({
+        from: newDate.from || undefined,
+        to: newDate.to || undefined,
+      });
+    } else {
+      setDate({
+        from: undefined,
+        to: undefined,
+      });
     }
   };
 
@@ -321,7 +344,7 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative h-[100vh] flex items-center justify-center">
         <Image
-          src="https://images.unsplash.com/photo-1512100356356-de1b84283e18?auto=format&fit=crop&q=80&w=1920"
+          src="/images/bg.jpg"
           alt="Southeast Asia Travel"
           fill
           className="object-cover brightness-50"
@@ -367,7 +390,7 @@ export default function Home() {
               />
             </div>
             <div className="md:col-span-1">
-              <DatePickerWithRange date={date} setDate={setDate} />
+              <DatePickerWithRange date={date} setDate={handleDateChange} />
             </div>
             <Button
               className="h-full bg-primary hover:bg-primary/90"

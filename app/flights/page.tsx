@@ -21,8 +21,9 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { getAirlineName } from "@/utils/airlines";
 import Image from "next/image";
+import { DateRange as DayPickerRange } from "react-day-picker";
 
-interface DateRange {
+interface CustomDateRange {
   from: Date | undefined;
   to: Date | undefined;
 }
@@ -30,7 +31,7 @@ interface DateRange {
 export default function FlightsPage() {
   const [origin, setOrigin] = useState("SIN");
   const [destination, setDestination] = useState("");
-  const [date, setDate] = useState<DateRange>({
+  const [date, setDate] = useState<CustomDateRange>({
     from: undefined,
     to: undefined,
   });
@@ -39,6 +40,17 @@ export default function FlightsPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const { user } = useAuth();
+
+  const handleDateChange = (newDate: DayPickerRange | undefined) => {
+    if (newDate) {
+      setDate({
+        from: newDate.from,
+        to: newDate.to ?? undefined,
+      });
+    } else {
+      setDate({ from: undefined, to: undefined });
+    }
+  };
 
   const handleSearch = async () => {
     if (!user) {
@@ -199,7 +211,7 @@ export default function FlightsPage() {
                 {/* <Calendar className="h-4 w-4 mr-2 text-primary" /> */}
                 Travel Dates
               </label>
-              <DatePickerWithRange date={date} setDate={setDate} />
+              <DatePickerWithRange date={date} setDate={handleDateChange} />
             </div>
 
             {/* Search Button */}

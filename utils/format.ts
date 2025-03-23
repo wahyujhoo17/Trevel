@@ -1,4 +1,5 @@
 import { locations } from "@/data/locations";
+import { CityGroup, PlanItem } from "@/types/plans";
 
 // Updated formatLocation function with enhanced display
 export const formatLocation = (code: string | undefined): string => {
@@ -13,27 +14,27 @@ export const formatLocation = (code: string | undefined): string => {
 };
 
 // Fungsi untuk mendapatkan tanggal dalam format lokal
-export function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) return "N/A";
+export const formatDate = (date: string): string => {
+  if (!date) return "N/A";
 
   try {
-    const date = new Date(dateString);
+    const dateObj = new Date(date);
 
     // Check if date is valid
-    if (isNaN(date.getTime())) {
-      return dateString;
+    if (isNaN(dateObj.getTime())) {
+      return date;
     }
 
-    return date.toLocaleDateString("en-US", {
+    return dateObj.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   } catch (error) {
     console.error("Error formatting date:", error);
-    return dateString;
+    return date;
   }
-}
+};
 
 // Format harga dengan konsisten
 export const formatPrice = (price: string | number | undefined): string => {
@@ -70,37 +71,46 @@ export const formatPrice = (price: string | number | undefined): string => {
 // in MyPlanContent.tsx
 
 // Group plans by destination with proper type checking
-const groupPlansByCity = (plans: any[]): CityGroup[] => {
+const groupPlansByCity = (plans: PlanItem[]): CityGroup[] => {
   if (!plans || plans.length === 0) return [];
 
   const groups: { [key: string]: CityGroup } = {};
 
   plans.forEach((plan) => {
-    // Determine plan type and destination
-    let destination: string;
-    let planType: "flight" | "hotel";
+    let code = "";
+    let city = "";
 
-    if (plan.type === "hotel" || plan.hotelName) {
-      planType = "hotel";
-      destination = plan.destination || "Unknown";
-    } else {
-      planType = "flight";
-      destination = plan.flight?.destination || "Unknown";
+    if (plan.type === "hotel" && plan.hotel) {
+      code = plan.code || "UNKNOWN";
+      city = plan.city || plan.hotel.name || "Unknown Location";
+    } else if (plan.flight) {
+      code = plan.flight.destination;
+      city = formatLocation(code);
+    } else if (plan.car) {
+      code = plan.car.location;
+      city = formatLocation(code);
     }
 
-    if (!groups[destination]) {
-      groups[destination] = {
-        city: extractCityName(destination),
-        code: destination,
+    const groupKey = code.toUpperCase();
+
+    if (!groups[groupKey]) {
+      groups[groupKey] = {
+        city,
+        code,
+        name: city,
+        country: "Unknown",
         flights: [],
         hotels: [],
+        cars: [],
       };
     }
 
-    if (planType === "hotel") {
-      groups[destination].hotels?.push(plan);
-    } else {
-      groups[destination].flights.push(plan);
+    if (plan.type === "hotel") {
+      groups[groupKey].hotels.push(plan);
+    } else if (plan.flight) {
+      groups[groupKey].flights.push(plan);
+    } else if (plan.car) {
+      groups[groupKey].cars.push(plan);
     }
   });
 

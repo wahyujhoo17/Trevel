@@ -12,27 +12,9 @@ import { FlightDetailModal } from "./flight-detail-modal";
 import { toast } from "sonner";
 import { db, auth } from "@/lib/firebase";
 import { ref, push, set } from "firebase/database";
+import { Flight } from "@/types/flight";
 // ...or for Firestore
 // import { collection, addDoc } from "firebase/firestore";
-
-interface Flight {
-  id: string;
-  airline: string;
-  flightNumber: string;
-  origin: string;
-  destination: string;
-  departureTime: string;
-  arrivalTime: string;
-  duration: string;
-  price: number | string;
-  currency: string;
-  departureDate: string;
-  cabin: string;
-  numberOfBookableSeats: number;
-  baggage: string;
-  terminal?: string;
-  aircraftType?: string;
-}
 
 interface FlightResultsProps {
   flights: Flight[];
@@ -205,6 +187,12 @@ export function FlightResults({
         return;
       }
 
+      // Convert baggage to proper format if it's a string
+      const baggage =
+        typeof flight.baggage === "string"
+          ? { checked: flight.baggage }
+          : flight.baggage;
+
       const planItem = {
         userId: user.uid,
         flightId,
@@ -221,7 +209,7 @@ export function FlightResults({
           price: flight.price,
           currency: flight.currency,
           cabin: flight.cabin,
-          baggage: flight.baggage,
+          baggage: baggage,
         },
         dateAdded: new Date().toISOString(),
         status: "active",

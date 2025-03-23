@@ -35,19 +35,13 @@ import { ref, push, set, serverTimestamp } from "firebase/database";
 import { db, auth } from "@/lib/firebase";
 import { toast } from "sonner";
 
-// Tambahkan fungsi formatLocation
-const formatLocation = (code: string | undefined): string => {
-  if (!code) return "Unknown";
-
-  // Cari lokasi berdasarkan kode
-  const location = locations.find((loc) => loc.code === code);
-  return location ? location.name : code;
-};
-
 interface FlightDetailModalProps {
   flight: Flight | null;
   isOpen: boolean;
   onClose: () => void;
+  displayPrice: (price: string | number, originalCurrency: string) => string;
+  formatLocation: (code: string, isModal?: boolean) => string;
+  onAddToPlan: (flightId: string, quantity: number) => Promise<void>;
   quantity?: number;
 }
 
@@ -55,6 +49,9 @@ export function FlightDetailModal({
   flight,
   isOpen,
   onClose,
+  displayPrice,
+  formatLocation,
+  onAddToPlan,
   quantity: initialQuantity = 1,
 }: FlightDetailModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);

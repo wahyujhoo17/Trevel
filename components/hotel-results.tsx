@@ -18,42 +18,23 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { Navigation, Pagination } from "swiper/modules";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, ReactElement } from "react";
 import { HotelDetailModal } from "@/components/hotel-detail-modal";
-
-interface Hotel {
-  name: string;
-  description: string;
-  logo: string | null;
-  gps_coordinates: {
-    latitude: number;
-    longitude: number;
-  } | null;
-  check_in_time: string;
-  check_out_time: string;
-  rate_per_night: string;
-  overall_rating: number;
-  reviews: number;
-  amenities: string[];
-  images: string[];
-  link: string | null;
-}
+import { Hotel } from "@/types/hotel";
 
 interface HotelResultsProps {
   hotels: Hotel[];
   isLoading: boolean;
   hasSearched: boolean;
-  selectedDates:
-    | {
-        from: Date;
-        to: Date;
-      }
-    | undefined;
+  selectedDates?: {
+    from: Date;
+    to: Date;
+  };
   onHotelSelect: (hotel: Hotel) => void;
 }
 
 // Map of common amenities to icons
-const amenityIcons: Record<string, JSX.Element> = {
+const amenityIcons: Record<string, ReactElement> = {
   "Free Wi-Fi": <Wifi className="h-3 w-3 mr-1" />,
   "Free breakfast": <Coffee className="h-3 w-3 mr-1" />,
   Restaurant: <Utensils className="h-3 w-3 mr-1" />,
@@ -147,8 +128,8 @@ export function HotelResults({
           <div className="space-y-2">
             <h3 className="text-lg font-semibold">No Hotels Found</h3>
             <p className="text-sm text-gray-500 max-w-md mx-auto">
-              We couldn&apos;t find any hotels matching your criteria. Try adjusting
-              your search parameters.
+              We couldn&apos;t find any hotels matching your criteria. Try
+              adjusting your search parameters.
             </p>
           </div>
         </div>

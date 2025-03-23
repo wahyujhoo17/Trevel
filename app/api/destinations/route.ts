@@ -31,8 +31,10 @@ interface Destination {
   link: string;
 }
 
-// Helper function to get high quality image for a destination
-const getHighQualityImage = async (destinationName: string) => {
+// Update the helper function to always return a string
+const getHighQualityImage = async (
+  destinationName: string
+): Promise<string> => {
   return new Promise((resolve, reject) => {
     search.json(
       {
@@ -43,12 +45,15 @@ const getHighQualityImage = async (destinationName: string) => {
         hl: "en",
         num: "1",
         safe: "active",
-        tbs: "isz:l,ic:specific,isc:rgb,sur:fmc", // Large size, full color, royalty-free images
+        tbs: "isz:l,ic:specific,isc:rgb,sur:fmc",
       },
       (data: any) => {
         if (data.error) reject(data.error);
         const image = data.images_results?.[0];
-        resolve(image?.original || image?.thumbnail);
+        // Provide a fallback image URL if no image is found
+        resolve(
+          image?.original || image?.thumbnail || "/images/placeholder.jpg"
+        );
       }
     );
   });
@@ -109,18 +114,21 @@ export async function GET() {
           link: item.link,
         })) || [];
 
-    // Fetch high quality images for each destination
+    // Update the image fetching logic
     destinations = await Promise.all(
       destinations.map(async (dest) => {
         try {
           const highQualityImage = await getHighQualityImage(dest.name);
           return {
             ...dest,
-            image: highQualityImage || dest.image,
+            image: highQualityImage || "/images/placeholder.jpg", // Ensure we always have a string
           };
         } catch (error) {
           console.error(`Failed to fetch image for ${dest.name}:`, error);
-          return dest;
+          return {
+            ...dest,
+            image: "/images/placeholder.jpg", // Fallback image on error
+          };
         }
       })
     );

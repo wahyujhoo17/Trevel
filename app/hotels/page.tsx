@@ -24,24 +24,11 @@ import { GuestInput } from "@/components/guest-input";
 import { StarRating } from "@/components/ui/star-rating";
 import { useFlightPlans } from "@/hooks/useFlightPlans";
 import { HotelDetailModal } from "@/components/hotel-detail-modal";
+import { Hotel } from "@/types/hotel";
+import { DateRange as DayPickerRange } from "react-day-picker";
+import { CustomDateRange } from "@/types/date";
 
-interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
-
-interface Hotel {
-  id: string;
-  name: string;
-  rating: number;
-  price: number;
-  currency: string;
-  address: string;
-  thumbnail: string;
-  description: string;
-  amenities: string[];
-  reviews: number;
-}
+// Remove the local DateRange interface since we're importing CustomDateRange
 
 interface GuestDetails {
   adults: number;
@@ -51,7 +38,7 @@ interface GuestDetails {
 
 export default function HotelsPage() {
   const [destination, setDestination] = useState("");
-  const [date, setDate] = useState<DateRange>({
+  const [date, setDate] = useState<CustomDateRange>({
     from: undefined,
     to: undefined,
   });
@@ -86,14 +73,29 @@ export default function HotelsPage() {
     }
   }, [date.from, date.to]);
 
+  const handleDateChange = (newDate: DayPickerRange | undefined) => {
+    if (newDate) {
+      setDate({
+        from: newDate.from || undefined,
+        to: newDate.to || undefined,
+      });
+    } else {
+      setDate({
+        from: undefined,
+        to: undefined,
+      });
+    }
+  };
+
   const handleSearch = async () => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
 
-    // More detailed validation
-    const missingFields = [];
+    // Define array type for missing fields
+    const missingFields: string[] = [];
+
     if (!destination) missingFields.push("destination");
     if (!date.from) missingFields.push("check-in date");
     if (!date.to) missingFields.push("check-out date");
@@ -258,7 +260,7 @@ export default function HotelsPage() {
                   <Calendar className="h-4 w-4 mr-2 text-primary" />
                   Check-in - Check-out
                 </label>
-                <DatePickerWithRange date={date} setDate={setDate} />
+                <DatePickerWithRange date={date} setDate={handleDateChange} />
               </div>
 
               <div className="space-y-2">

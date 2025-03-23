@@ -22,7 +22,7 @@ import Image from "next/image";
 import { formatDate } from "@/utils/format";
 import type { CityGroup, PlanItem } from "@/types/plans";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 interface HotelPlansProps {
@@ -246,14 +246,12 @@ export function HotelPlans({
                                 )}
                               </div>
                             </div>
-
                             {/* Short description */}
                             {hotel.description && (
                               <p className="text-sm text-gray-600 mt-2.5 line-clamp-2">
                                 {hotel.description}
                               </p>
                             )}
-
                             {/* Location and Dates */}
                             <div className="mt-4 mb-1.5 flex flex-wrap gap-x-4 gap-y-2.5">
                               {/* Location */}
@@ -292,40 +290,40 @@ export function HotelPlans({
                                 </div>
                               )}
                             </div>
-
+                            
                             {/* Amenities preview */}
-                            {hotel.amenities && hotel.amenities.length > 0 && (
-                              <div className="mt-3 flex flex-wrap gap-1.5">
-                                {hotel.amenities
-                                  .slice(
-                                    0,
-                                    expandedHotel === hotel.id ? undefined : 3
-                                  )
-                                  .map((amenity, i) => (
-                                    <Badge
-                                      key={i}
-                                      variant="outline"
-                                      className="bg-gray-50 text-gray-700 text-xs py-0.5"
-                                    >
-                                      {getAmenityIcon(amenity)}
-                                      <span className="ml-1">{amenity}</span>
-                                    </Badge>
-                                  ))}
-                                {hotel.amenities.length > 3 &&
-                                  expandedHotel !== hotel.id && (
-                                    <Badge
-                                      variant="outline"
-                                      className="bg-gray-50 text-primary hover:bg-gray-100 cursor-pointer"
-                                      onClick={() =>
-                                        toggleExpandHotel(hotel.id)
-                                      }
-                                    >
-                                      +{hotel.amenities.length - 3} more
-                                    </Badge>
-                                  )}
-                              </div>
-                            )}
-
+                            {Array.isArray(hotel.amenities) &&
+                              hotel.amenities.length > 0 && (
+                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                  {hotel.amenities
+                                    .slice(
+                                      0,
+                                      expandedHotel === hotel.id ? undefined : 3
+                                    )
+                                    .map((amenity, i) => (
+                                      <Badge
+                                        key={`${hotel.id}-amenity-${i}`}
+                                        variant="outline"
+                                        className="bg-gray-50 text-gray-700 text-xs py-0.5"
+                                      >
+                                        {getAmenityIcon(amenity)}
+                                        <span className="ml-1">{amenity}</span>
+                                      </Badge>
+                                    ))}
+                                  {hotel.amenities.length > 3 &&
+                                    expandedHotel !== hotel.id && (
+                                      <Badge
+                                        variant="outline"
+                                        className="bg-gray-50 text-primary hover:bg-gray-100 cursor-pointer"
+                                        onClick={() =>
+                                          toggleExpandHotel(hotel.id)
+                                        }
+                                      >
+                                        +{hotel.amenities.length - 3} more
+                                      </Badge>
+                                    )}
+                                </div>
+                              )}
                             {/* Action Buttons */}
                             <div className="mt-4 pt-4 border-t flex justify-between items-center">
                               {/* Total cost info */}

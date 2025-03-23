@@ -1,78 +1,62 @@
-import { Flight } from "./flight";
+import { BaseFlight, PlanBase, CityGroupBase, BaseCar } from "./shared";
+// export type { Car } from "./shared";
 
-export interface PlanItem {
-  id: string;
-  userId?: string;
-  type?: "hotel" | "flight" | "car";
+export interface Flight extends BaseFlight {}
 
-  // Hotel direct properties
+export interface Hotel {
+  id?: string;
+  name: string;
   hotelName?: string;
-  description?: string;
   mainImage?: string;
-  checkInDate?: string;
-  checkOutDate?: string;
+  description?: string;
+  checkInDate: string;
+  checkOutDate: string;
   checkInTime?: string;
   checkOutTime?: string;
+  ratePerNight: number | string;
+  amenities?: string[];
   rating?: number;
-  ratePerNight?: string;
-
-  // Location properties - tambahkan ini
-  destination?: string; // General location (e.g. "Bali")
-  city?: string; // City name (e.g. "Denpasar")
-  code?: string; // Location code (e.g. "DPS")
-
-  // Flight data (dalam properti 'flight')
-  flight?: {
-    airline: string;
-    flightNumber: string;
-    departureDate: string;
-    departureTime: string;
-    arrivalTime: string;
-    origin: string;
-    destination: string;
-    cabin: string;
-    price: string | number;
-  } | null;
-
-  // Hotel data (dalam properti 'hotel' - format alternatif)
-  hotel?: {
-    name: string;
-    city: string;
-    checkInDate?: string;
-    checkOutDate?: string;
-  } | null;
-
-  // Car data
-  car?: {
-    model: string;
-    location: string;
-    pickupDate?: string;
-    returnDate?: string;
-  } | null;
-
-  // General properties
-  createdAt?: any;
-  dateAdded?: string;
-  status?: string;
-  quantity?: number;
-  flightId?: string;
-
-  // Allow additional properties
-  [key: string]: any;
+  city?: string;
+  totalCost?: number;
 }
 
-export interface CityGroup {
-  city: string;
+// Define Car type based on BaseCar
+export interface Car extends BaseCar {
+  status?: "available" | "booked" | "maintenance";
+}
+
+export interface PlanItem extends PlanBase {
+  totalCost: any;
+  amenities: boolean;
+  checkInTime: any;
+  description: any;
+  checkOutDate: any;
+  checkInDate: any;
+  ratePerNight: any;
+  rating: any;
+  hotelName: string;
+  mainImage: any;
+  destination: string | undefined;
+  id: string;
+  type: "flight" | "hotel" | "car";
+  userId: string;
+  code?: string;
+  city?: string;
+  flight?: Flight;
+  hotel?: Hotel;
+  car?: Car;
+  createdAt: any;
+  quantity?: number;
+}
+
+export interface CityGroup extends CityGroupBase {
   code: string;
+  city: string;
+  name: string;
+  country: string;
   flights: PlanItem[];
   hotels: PlanItem[];
   cars: PlanItem[];
-}
-
-export interface Flight {
-  // ... existing properties ...
-  price: number;
-  currency: string;
 }
 
 export interface HotelPlan {

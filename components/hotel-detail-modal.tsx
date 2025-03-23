@@ -41,28 +41,17 @@ import "swiper/css/pagination";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { locations } from "@/data/locations";
+import { Hotel } from "@/types/hotel";
 
 interface HotelDetailModalProps {
-  hotel: {
-    name: string;
-    images?: string[];
-    description?: string;
-    rate_per_night: string;
-    amenities?: string[];
-    overall_rating: number;
-    reviews: number;
-    gps_coordinates?: string;
-    check_in_time: string;
-    check_out_time: string;
-    link?: string;
-  } | null;
+  hotel: Hotel | null;
   isOpen: boolean;
   onClose: () => void;
   selectedDates?: {
     from: Date;
     to: Date;
   };
-  destination?: string; // This is the airport code
+  destination: string;
 }
 
 export function HotelDetailModal({
@@ -123,6 +112,12 @@ export function HotelDetailModal({
 
   // Add to plan function with improved error handling
   const addToMyPlan = async () => {
+    // Early return if no hotel or user
+    if (!hotel) {
+      toast.error("Hotel details not available");
+      return;
+    }
+
     if (!user) {
       toast.error("Authentication required", {
         description: "Please sign in to add hotels to your plan",
@@ -203,6 +198,11 @@ export function HotelDetailModal({
     hotel.description && hotel.description.length > 300
       ? hotel.description.substring(0, 300) + "..."
       : hotel.description;
+
+  // Inside the component where you use GPS coordinates
+  const coordinates = hotel?.gps_coordinates
+    ? `${hotel.gps_coordinates.latitude},${hotel.gps_coordinates.longitude}`
+    : undefined;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -459,6 +459,16 @@ export function HotelDetailModal({
                 )}
               </div>
             </div>
+
+            {/* Location */}
+            {hotel?.gps_coordinates && (
+              <div className="mt-4">
+                <h3 className="text-sm font-medium text-gray-900">Location</h3>
+                <p className="text-sm text-gray-500">
+                  {`${hotel.gps_coordinates.latitude}, ${hotel.gps_coordinates.longitude}`}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

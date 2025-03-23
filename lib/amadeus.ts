@@ -1,8 +1,7 @@
 import Amadeus from "amadeus";
 
-const AMADEUS_CLIENT_ID = process.env.NEXT_PUBLIC_AMADEUS_CLIENT_ID || "";
-const AMADEUS_CLIENT_SECRET =
-  process.env.NEXT_PUBLIC_AMADEUS_CLIENT_SECRET || "";
+const AMADEUS_CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID || "";
+const AMADEUS_CLIENT_SECRET = process.env.NEXT_PUBLIC_CLIENT_SECRET || "";
 const AMADEUS_API_URL = "https://test.api.amadeus.com";
 
 export interface AmadeusToken {
@@ -75,8 +74,8 @@ export async function getFlightOffers(
 }
 
 const amadeus = new Amadeus({
-  clientId: glW93rtZb6CSlrXtY0YecRvcLGcLzERI,
-  clientSecret: PfA1W7ivaqA3bwWk,
+  clientId: AMADEUS_CLIENT_ID,
+  clientSecret: AMADEUS_CLIENT_SECRET,
 });
 
 export default amadeus;

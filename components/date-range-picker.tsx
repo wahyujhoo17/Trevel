@@ -3,7 +3,7 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { DateRange } from "react-day-picker";
+import { DateRange as ReactDayPickerRange, DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -12,10 +12,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { CustomDateRange, DateRangeProps } from "@/types/date";
 
 interface DatePickerWithRangeProps {
   className?: string;
-  date: DateRange | undefined;
+  date: CustomDateRange;
   setDate: (date: DateRange | undefined) => void;
 }
 

@@ -73,6 +73,8 @@ export function MyPlanContent() {
         groups[groupKey] = {
           city: city,
           code: code,
+          name: city, // Add name property
+          country: "Unknown", // Add country property
           flights: [],
           hotels: [],
           cars: [],

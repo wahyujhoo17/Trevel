@@ -5,16 +5,18 @@ import { Toast } from "@radix-ui/react-toast";
 import { Car } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { CityGroup as PlanCityGroup } from "@/types/plans";
+import { ReactElement, ReactNode } from "react";
 
 interface CarPlansProps {
-  cityGroups: CityGroup[];
+  cityGroups: PlanCityGroup[];
   selectedCity: string | null;
   onRemovePlan: (id: string) => Promise<void>;
   renderEmptySection: (
     title: string,
     description: string,
-    icon: React.ReactNode
-  ) => JSX.Element;
+    icon: ReactNode
+  ) => ReactElement;
 }
 
 export function CarPlans({
