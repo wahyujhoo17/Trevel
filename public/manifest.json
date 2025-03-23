@@ -1,6 +1,8 @@
 {
-  "name": "Southeast Asia Trip Planner",
-  "short_name": "Trip Planner",
+  "name": "Travel Planner",
+  "short_name": "Travel",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/icons/icon.png",
@@ -8,7 +10,7 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#ffffff",
+  "theme_color": "#000000",
   "background_color": "#ffffff",
   "display": "standalone"
 }

@@ -6,6 +6,7 @@ import {
   signOut,
   setPersistence,
   browserLocalPersistence,
+  signInWithRedirect,
 } from "firebase/auth";
 import {
   Dialog,
@@ -129,20 +130,52 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setError(null);
 
     try {
-      // Set persistence first for social logins too
+      // Check if running on mobile/tablet
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
       await setPersistence(auth, browserLocalPersistence);
 
       if (provider === "google") {
-        const result = await signInWithPopup(auth, googleProvider);
-        if (result) {
-          toast.success("Successfully signed in with Google!");
-          onClose();
+        if (isMobile) {
+          // Use redirect flow for mobile devices
+          await signInWithRedirect(auth, googleProvider);
+        } else {
+          try {
+            // Try popup first
+            const result = await signInWithPopup(auth, googleProvider);
+            if (result) {
+              toast.success("Successfully signed in with Google!");
+              onClose();
+            }
+          } catch (popupError: any) {
+            // If popup is blocked, fallback to redirect
+            if (popupError.code === "auth/popup-blocked") {
+              toast.info("Popup was blocked, trying redirect instead...");
+              await signInWithRedirect(auth, googleProvider);
+            } else {
+              throw popupError;
+            }
+          }
         }
       } else if (provider === "twitter") {
-        const result = await signInWithPopup(auth, twitterProvider);
-        if (result) {
-          toast.success("Successfully signed in with Twitter!");
-          onClose();
+        // Similar pattern for Twitter
+        if (isMobile) {
+          await signInWithRedirect(auth, twitterProvider);
+        } else {
+          try {
+            const result = await signInWithPopup(auth, twitterProvider);
+            if (result) {
+              toast.success("Successfully signed in with Twitter!");
+              onClose();
+            }
+          } catch (popupError: any) {
+            if (popupError.code === "auth/popup-blocked") {
+              toast.info("Popup was blocked, trying redirect instead...");
+              await signInWithRedirect(auth, twitterProvider);
+            } else {
+              throw popupError;
+            }
+          }
         }
       } else if (provider === "apple") {
         toast.info("Apple sign in coming soon");

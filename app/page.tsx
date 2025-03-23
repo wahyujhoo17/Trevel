@@ -31,6 +31,8 @@ import { locations } from "@/data/locations"; // First, import the locations dat
 import { Destination } from "@/types/destination";
 import { DateRange } from "react-day-picker";
 import { CustomDateRange, DateRangeProps } from "@/types/date";
+import { getRedirectResult } from "firebase/auth";
+import { auth } from "@/lib/firebase"; // Add this at the top with other imports
 
 export default function Home() {
   const [origin, setOrigin] = useState("SIN");
@@ -75,6 +77,21 @@ export default function Home() {
     };
 
     fetchDestinations();
+  }, []);
+
+  useEffect(() => {
+    // Handle redirect result
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // User successfully logged in after redirect
+          toast.success("Successfully logged in!");
+        }
+      })
+      .catch((error) => {
+        console.error("Redirect error:", error);
+        toast.error("Login failed. Please try again.");
+      });
   }, []);
 
   const handlePlanningClick = () => {
