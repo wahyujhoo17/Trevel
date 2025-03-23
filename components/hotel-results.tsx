@@ -147,7 +147,7 @@ export function HotelResults({
           <div className="space-y-2">
             <h3 className="text-lg font-semibold">No Hotels Found</h3>
             <p className="text-sm text-gray-500 max-w-md mx-auto">
-              We couldn't find any hotels matching your criteria. Try adjusting
+              We couldn&apos;t find any hotels matching your criteria. Try adjusting
               your search parameters.
             </p>
           </div>

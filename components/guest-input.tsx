@@ -119,7 +119,7 @@ export function GuestInput({ value, onChange }: GuestInputProps) {
             {value.children > 0 && (
               <div className="space-y-3">
                 <div className="text-sm font-medium text-gray-700">
-                  Children's Ages
+                  Children&apos;s Ages
                 </div>
                 {value.childrenAges.map((age, index) => (
                   <div key={index} className="flex items-center space-x-2">
