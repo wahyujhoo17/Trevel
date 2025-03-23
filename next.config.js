@@ -1,25 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**',
+        port: '',
+        pathname: '/**',
       },
-      {
-        protocol: 'http',
-        hostname: '**',
-      }
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/destinations',
-        destination: 'https://serpapi.com/search.json'
-      }
-    ];
-  }
-};
+  swcMinify: true,
+}
 
 module.exports = nextConfig;
