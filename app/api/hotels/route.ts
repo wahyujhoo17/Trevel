@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getJson } from "serpapi";
 import dotenv from "dotenv";
-import { locations } from "@/data/locations";
 
 // Add interfaces for type safety
 interface SerpApiHotelProperty {
@@ -36,31 +35,42 @@ dotenv.config();
 
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const destination = searchParams.get("destination");
-  const destinationCode = searchParams.get("destinationCode");
-  const checkIn = searchParams.get("checkIn");
-  const checkOut = searchParams.get("checkOut");
-  const adults = searchParams.get("adults") || "2";
+if (!SERPAPI_KEY) {
+  throw new Error("SERPAPI_KEY is not defined in environment variables");
+}
 
-  if (!destination || !checkIn || !checkOut) {
-    return NextResponse.json(
-      { error: "Missing required search parameters" },
-      { status: 400 }
-    );
-  }
-
+export async function GET(req: Request) {
   try {
-    // First try the API call
-    const response = await fetch(`your-hotel-api-endpoint`);
-    const data = await response.json();
+    const { searchParams } = new URL(req.url);
+    const destination = searchParams.get("destination");
+    const checkIn = searchParams.get("checkIn");
+    const checkOut = searchParams.get("checkOut");
+    const adults = searchParams.get("adults") || "2";
 
-    if (data.error === "Your account has run out of searches.") {
-      // Fallback to mock data
-      const mockHotels = generateMockHotels(destination!, destinationCode!);
-      return NextResponse.json({ hotels: mockHotels });
+    if (!destination || !checkIn || !checkOut) {
+      return NextResponse.json(
+        { error: "Missing required search parameters" },
+        { status: 400 }
+      );
     }
+
+    // Type the Promise resolution
+    const data: SerpApiResponse = await new Promise((resolve, reject) => {
+      getJson(
+        {
+          engine: "google_hotels",
+          q: destination,
+          check_in_date: checkIn,
+          check_out_date: checkOut,
+          adults: adults,
+          currency: "USD",
+          gl: "us",
+          hl: "en",
+          api_key: SERPAPI_KEY,
+        },
+        (json) => resolve(json)
+      );
+    });
 
     // Map data with proper typing
     const hotels = (data?.properties || []).map(
@@ -84,31 +94,10 @@ export async function GET(request: Request) {
     );
 
     return NextResponse.json({ hotels }, { status: 200 });
-  } catch (error) {
-    // Fallback to mock data on error
-    const mockHotels = generateMockHotels(destination!, destinationCode!);
-    return NextResponse.json({ hotels: mockHotels });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: "Failed to fetch hotels", details: error.message },
+      { status: 500 }
+    );
   }
-}
-
-function generateMockHotels(city: string, code: string) {
-  // Generate some mock hotels based on the destination
-  return [
-    {
-      id: `${code}-1`,
-      name: `${city} Grand Hotel`,
-      description: `Luxury hotel in the heart of ${city}`,
-      rate_per_night: "$" + Math.floor(Math.random() * 10) + 100,
-      overall_rating: (Math.random() * 2 + 3).toFixed(1),
-      check_in_time: "12:00AM",
-      check_out_time: "15:00PM",
-      reviews: Math.floor(Math.random() * 1000),
-      city: city,
-      code: code,
-      images: [
-        "https://images.trvl-media.com/lodging/2000000/1110000/1102000/1101942/b2b0dad6.jpg?impolicy=resizecrop&rw=575&rh=575&ra=fill",
-      ],
-      amenities: ["WiFi", "Pool", "Spa", "Restaurant"],
-    },
-  ];
 }
