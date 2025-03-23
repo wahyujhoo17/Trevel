@@ -152,8 +152,6 @@ export default function HotelsPage() {
         params.append("children_ages", guestDetails.childrenAges.join(","));
       }
 
-      // console.log("Search params:", params.toString());
-      // const response = {} as Response;
       const response = await fetch(`/api/hotels?${params}`);
       const data = await response.json();
 
