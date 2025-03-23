@@ -54,7 +54,7 @@ export function Navbar({ user }: NavbarProps) {
                     scrolled ? "text-primary" : "text-white"
                   }`}
                 >
-                  TripPlanner
+                  TripPlaner
                 </h1>
               </Link>
             </div>
