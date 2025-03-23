@@ -134,14 +134,23 @@ export default function HotelsPage() {
 
       // Find the location object that matches the destination
       const locationInfo = locations.find(
-        (loc) => loc.code === destination || loc.city === destination
+        (loc) =>
+          loc.code === destination ||
+          loc.city.toLowerCase() === destination.toLowerCase()
       );
 
-      // Use the city name if found, otherwise use the original destination
-      const cityName = locationInfo ? locationInfo.city : destination;
+      if (!locationInfo) {
+        toast.error("Invalid destination", {
+          description: "Please select a valid destination from the list",
+        });
+        setIsSearching(false);
+        return;
+      }
 
+      // Use both city name and code for better search results
       const params = new URLSearchParams({
-        destination: cityName,
+        destination: locationInfo.city,
+        destinationCode: locationInfo.code,
         checkIn: format(date.from!, "yyyy-MM-dd"),
         checkOut: format(date.to!, "yyyy-MM-dd"),
         adults: guestDetails.adults.toString(),
