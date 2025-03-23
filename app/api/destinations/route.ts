@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { GoogleSearch } from "google-search-results-nodejs";
+import path from "path";
+import fs from "fs/promises";
 import { getCachedData, setCachedData } from "@/utils/cache";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -59,6 +61,18 @@ const getHighQualityImage = async (
   });
 };
 
+// Add function to read local JSON data
+async function getLocalDestinations() {
+  try {
+    const filePath = path.join(process.cwd(), "data", "destination.json");
+    const fileContent = await fs.readFile(filePath, "utf-8");
+    return JSON.parse(fileContent).data;
+  } catch (error) {
+    console.error("Error reading local destinations:", error);
+    return null;
+  }
+}
+
 export async function GET() {
   try {
     // Try to get cached data first
@@ -90,6 +104,15 @@ export async function GET() {
 
     const data: any = await getResults();
     // console.log("API Response:", JSON.stringify(data, null, 2));
+
+    // Check for API errors or limits
+    if (data.error === "Your account has run out of searches." || data.error) {
+      // Get local data if API fails
+      const localDestinations = await getLocalDestinations();
+      if (localDestinations) {
+        return NextResponse.json(localDestinations);
+      }
+    }
 
     // Get destinations with separated prices
     let destinations: Destination[] =
@@ -142,6 +165,12 @@ export async function GET() {
 
     return NextResponse.json(destinations);
   } catch (error) {
+    // On any error, try to get local data
+    const localDestinations = await getLocalDestinations();
+    if (localDestinations) {
+      return NextResponse.json(localDestinations);
+    }
+
     // Try to use cached data as fallback if API fails
     const cachedDestinations = await getCachedData("destinations.json");
     if (cachedDestinations) {
