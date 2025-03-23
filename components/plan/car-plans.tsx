@@ -1,8 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Toast } from "@radix-ui/react-toast";
 import { Car } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface CarPlansProps {
   cityGroups: CityGroup[];
@@ -40,7 +42,7 @@ export function CarPlans({
           <Button
             variant="outline"
             className="mx-auto"
-            onClick={() => router.push("/cars")}
+            onClick={() => toast.info("Coming soon!")} // Replace with router.push("/cars")
           >
             <Car className="h-4 w-4 mr-2" />
             Browse Car Rentals

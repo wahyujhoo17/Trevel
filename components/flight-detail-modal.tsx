@@ -1,6 +1,15 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -8,246 +17,330 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Minus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Plus, Minus, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Plane, Luggage } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Plane,
+  Luggage,
+  Loader2,
+  CheckCircle2,
+} from "lucide-react";
 import Image from "next/image";
 import { getAirlineInfo } from "@/utils/airlines";
-import { locations } from "@/data/locations"; // Add this import
-import { Flight } from "@/types/flight"; // Create this type file if not exists
+import { locations } from "@/data/locations";
+import { Flight } from "@/types/flight";
+import { ref, push, set, serverTimestamp } from "firebase/database";
+import { db, auth } from "@/lib/firebase";
+import { toast } from "sonner";
+
+// Tambahkan fungsi formatLocation
+const formatLocation = (code: string | undefined): string => {
+  if (!code) return "Unknown";
+
+  // Cari lokasi berdasarkan kode
+  const location = locations.find((loc) => loc.code === code);
+  return location ? location.name : code;
+};
 
 interface FlightDetailModalProps {
-  flight: Flight;
+  flight: Flight | null;
   isOpen: boolean;
   onClose: () => void;
-  displayPrice: (price: number | string, currency: string) => string;
-  formatLocation: (code: string, fullName?: boolean) => string;
-  onAddToPlan: (flightId: string, quantity: number) => void;
+  quantity?: number;
 }
 
 export function FlightDetailModal({
   flight,
   isOpen,
   onClose,
-  displayPrice,
-  formatLocation,
-  onAddToPlan,
+  quantity: initialQuantity = 1,
 }: FlightDetailModalProps) {
-  const [quantity, setQuantity] = useState(1);
-  const maxTickets = Math.min(flight.numberOfBookableSeats, 9);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
+  const [quantity, setQuantity] = useState(initialQuantity);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    // Reset states when modal is opened
+    if (isOpen) {
+      setIsAdded(false);
+      setQuantity(initialQuantity);
+    }
+  }, [isOpen, initialQuantity]);
+
+  if (!flight) return null;
+
+  // Get airline info
+  const airlineCode = flight.flightNumber?.split(/\d/)[0] || "";
+  const airlineInfo = getAirlineInfo(airlineCode);
+
+  // Handle quantity change
+  const incrementQuantity = () => {
+    setQuantity((prev) => Math.min(prev + 1, 9)); // Maximum 9 tickets
+  };
+
+  const decrementQuantity = () => {
+    setQuantity((prev) => Math.max(prev - 1, 1)); // Minimum 1 ticket
+  };
+
+  const handleQuantityChange = (value: string) => {
+    setQuantity(parseInt(value));
+  };
+
+  const addToMyPlan = async () => {
+    try {
+      const user = auth.currentUser;
+
+      if (!user) {
+        toast.error("Authentication Required", {
+          description: "Please log in to add flights to your plan",
+        });
+        return;
+      }
+
+      // Try to get a fresh token
+      await user.getIdToken(true);
+
+      setIsSubmitting(true);
+
+      // Simplify data structure if possible
+      const flightData = {
+        userId: user.uid,
+        type: "flight",
+        flightId: flight.id || `${flight.flightNumber}-${Date.now()}`,
+        quantity, // Use the current quantity state
+        flight: {
+          airline: flight.airline || "Unknown Airline",
+          flightNumber: flight.flightNumber || "Unknown",
+          departureDate:
+            flight.departureDate || new Date().toISOString().split("T")[0],
+          departureTime: flight.departureTime || "00:00",
+          arrivalTime: flight.arrivalTime || "00:00",
+          origin: flight.origin || "Unknown",
+          destination: flight.destination || "Unknown",
+          cabin: flight.cabin || "Economy",
+          price: flight.price || "$0",
+        },
+        createdAt: serverTimestamp(),
+        status: "confirmed",
+      };
+
+      // Write ke plans
+      const plansRef = ref(db, `plans/${user.uid}`);
+      const newPlanRef = push(plansRef);
+      await set(newPlanRef, flightData);
+
+      setIsAdded(true);
+      toast.success("Added to your plan!");
+    } catch (error: any) {
+      let errorMessage = "Failed to add flight to your plan";
+      if (
+        error.code === "PERMISSION_DENIED" ||
+        error.code === "permission_denied"
+      ) {
+        errorMessage = "Permission denied. Please log out and log back in.";
+      }
+
+      toast.error("Error", { description: errorMessage });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg md:max-w-2xl w-[95%] p-4 md:p-6">
-        {/* Header Section */}
-        <DialogHeader className="space-y-2 pb-4 border-b">
-          <DialogTitle className="text-xl md:text-2xl font-bold">
-            Flight Details
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl flex items-center gap-2">
+            {airlineInfo?.logo ? (
+              <div className="w-8 h-8 relative">
+                <Image
+                  src={airlineInfo.logo}
+                  alt={flight.airline || ""}
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            ) : (
+              <Plane className="h-6 w-6" />
+            )}
+            {flight.airline} {flight.flightNumber}
           </DialogTitle>
-          <p className="text-sm md:text-base text-muted-foreground">
-            {`${formatLocation(flight.origin, true)} → ${formatLocation(
-              flight.destination,
-              true
-            )}`}
-          </p>
+          <DialogDescription>
+            {formatLocation(flight.origin)} to{" "}
+            {formatLocation(flight.destination)}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Airline and Price Section */}
-          <div className="flex justify-between items-start">
-            <div className="flex items-center space-x-4">
-              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary/10 flex items-center justify-center relative overflow-hidden">
-                {getAirlineInfo(flight.flightNumber.split(/(\d+)/)[0])?.logo ? (
-                  <Image
-                    src={
-                      getAirlineInfo(flight.flightNumber.split(/(\d+)/)[0])!
-                        .logo!
-                    }
-                    alt={flight.airline}
-                    fill
-                    className="object-contain rounded-full outline outline-2 outline-gray-800 shadow-sm"
-                    sizes="(max-width: 768px) 56px, 64px"
-                    priority
-                  />
-                ) : (
-                  <Plane className="h-7 w-7 md:h-8 md:w-8 text-primary" />
-                )}
-              </div>
-              <div>
-                <h3 className="text-lg md:text-xl font-semibold">
-                  {flight.airline}
+        <div className="grid gap-4">
+          {/* Flight Info Card */}
+          <div className="border rounded-lg p-4">
+            {/* Flight Path */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+              <div className="text-center lg:text-left">
+                <p className="text-sm text-gray-500">From</p>
+                <h3 className="text-lg font-semibold">
+                  {formatLocation(flight.origin)}
                 </h3>
-                <div className="flex items-center space-x-2">
-                  <p className="text-sm text-gray-600">{flight.flightNumber}</p>
-                  {getAirlineInfo(flight.flightNumber.split(/(\d+)/)[0])
-                    ?.alliance && (
-                    <Badge variant="outline" className="text-xs bg-primary/5">
-                      {
-                        getAirlineInfo(flight.flightNumber.split(/(\d+)/)[0])
-                          ?.alliance
-                      }
-                    </Badge>
-                  )}
+                <p className="text-xl font-bold">{flight.departureTime}</p>
+              </div>
+
+              <div className="flex items-center justify-center">
+                <div className="w-full flex items-center">
+                  <div className="h-2 w-2 rounded-full bg-gray-400"></div>
+                  <div className="h-0.5 flex-1 bg-gray-300"></div>
+                  <Plane className="h-5 w-5 text-primary mx-2" />
+                  <div className="h-0.5 flex-1 bg-gray-300"></div>
+                  <div className="h-2 w-2 rounded-full bg-gray-400"></div>
                 </div>
               </div>
+
+              <div className="text-center lg:text-right">
+                <p className="text-sm text-gray-500">To</p>
+                <h3 className="text-lg font-semibold">
+                  {formatLocation(flight.destination)}
+                </h3>
+                <p className="text-xl font-bold">{flight.arrivalTime}</p>
+              </div>
+            </div>
+
+            {/* Flight Details */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+              <div>
+                <p className="text-sm text-gray-500">Date</p>
+                <p className="font-medium">{flight.departureDate}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Class</p>
+                <p className="font-medium">{flight.cabin}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Flight</p>
+                <p className="font-medium">{flight.flightNumber}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Duration</p>
+                <p className="font-medium">{flight.duration || "N/A"}</p>
+              </div>
             </div>
           </div>
 
-          {/* Flight Info Section */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <div className="space-y-1.5">
-              <p className="text-xs text-gray-500">Date</p>
-              <Badge
-                variant="outline"
-                className="text-xs md:text-sm bg-blue-50"
-              >
-                <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                {flight.departureDate}
-              </Badge>
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-xs text-gray-500">Cabin</p>
-              <Badge
-                variant="outline"
-                className="text-xs md:text-sm bg-purple-50"
-              >
-                {flight.cabin}
-              </Badge>
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-xs text-gray-500">Available Seats</p>
-              <Badge
-                variant="outline"
-                className="text-xs md:text-sm bg-green-50"
-              >
-                {flight.numberOfBookableSeats} seats
-              </Badge>
-            </div>
-            {flight.baggage && (
-              <div className="space-y-1.5">
-                <p className="text-xs text-gray-500">Baggage</p>
-                <Badge
+          {/* Quantity Selector */}
+          <div className="border rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                <h3 className="text-base font-medium">Number of Passengers</h3>
+              </div>
+
+              <div className="flex items-center">
+                <Button
                   variant="outline"
-                  className="text-xs md:text-sm bg-yellow-50"
+                  size="icon"
+                  onClick={decrementQuantity}
+                  disabled={quantity <= 1}
+                  className="h-8 w-8 rounded-full"
                 >
-                  <Luggage className="h-3.5 w-3.5 mr-1.5" />
-                  {flight.baggage}
+                  <Minus className="h-3 w-3" />
+                </Button>
+
+                <Select
+                  value={quantity.toString()}
+                  onValueChange={handleQuantityChange}
+                >
+                  <SelectTrigger className="w-16 h-8 mx-2 text-center">
+                    <SelectValue placeholder="1" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={incrementQuantity}
+                  disabled={quantity >= 9}
+                  className="h-8 w-8 rounded-full"
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Price Info */}
+          <div className="bg-primary/10 p-4 rounded-lg">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-gray-600">Total Price</p>
+                <p className="text-2xl font-bold text-primary">
+                  {typeof flight.price === "number"
+                    ? `$${(flight.price * quantity).toFixed(2)}`
+                    : typeof flight.price === "string" &&
+                      flight.price.startsWith("$")
+                    ? `$${(
+                        parseFloat(flight.price.substring(1)) * quantity
+                      ).toFixed(2)}`
+                    : `${flight.price} × ${quantity}`}
+                </p>
+              </div>
+              <div>
+                <Badge variant="outline" className="text-xs">
+                  {quantity} ×{" "}
+                  {typeof flight.price === "number"
+                    ? `$${flight.price.toFixed(2)}`
+                    : flight.price}
                 </Badge>
               </div>
-            )}
-          </div>
-
-          {/* Flight Timeline */}
-          <div className="relative flex items-center justify-between bg-gray-50/50 rounded-lg p-4 mt-6">
-            <div>
-              <p className="text-lg font-medium">{flight.departureTime}</p>
-              <p className="text-sm text-gray-600 max-w-[140px] md:max-w-none">
-                {formatLocation(flight.origin, true)}
-              </p>
-              {flight.terminal && (
-                <p className="text-xs text-gray-500">
-                  Terminal {flight.terminal}
-                </p>
-              )}
-            </div>
-
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-              <div className="relative w-32 h-[2px] bg-gray-300">
-                <Plane className="absolute -top-[6px] left-1/2 -translate-x-1/2 h-3.5 w-3.5 text-primary rotate-90" />
-              </div>
-              <p className="text-xs text-gray-500 mt-4">{flight.duration}</p>
-              {flight.aircraftType && (
-                <p className="text-[10px] text-gray-400">
-                  {flight.aircraftType}
-                </p>
-              )}
-            </div>
-
-            <div className="text-right">
-              <p className="text-lg font-medium">{flight.arrivalTime}</p>
-              <p className="text-sm text-gray-600 max-w-[140px] md:max-w-none">
-                {formatLocation(flight.destination, true)}
-              </p>
-              {flight.terminal && (
-                <p className="text-xs text-gray-500">
-                  Terminal {flight.terminal}
-                </p>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Footer Section */}
-        <DialogFooter className="flex flex-col space-y-6 border-t pt-4 mt-4">
-          <div className="flex items-center justify-between w-full">
-            {/* Ticket Selection */}
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Select Tickets</p>
-              <div className="flex items-center space-x-2 bg-gray-50 rounded-md p-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                >
-                  <Minus className="h-3.5 w-3.5" />
-                </Button>
-                <span className="w-8 text-center text-sm">{quantity}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() =>
-                    setQuantity(Math.min(maxTickets, quantity + 1))
-                  }
-                  disabled={quantity >= maxTickets}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Price & Add Button */}
-            <div className="flex flex-col items-end space-y-2">
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Total Price</p>
-                <p className="text-xl font-bold text-primary">
-                  {displayPrice(
-                    Number(flight.price) * quantity,
-                    flight.currency
-                  )}
-                </p>
-              </div>
-
-              {/* Add to Plan Button */}
-              <Button
-                className="w-full md:w-auto md:px-8"
-                onClick={() => {
-                  onAddToPlan(flight.id, quantity);
-                  onClose();
-                }}
-              >
-                Add to My Plan
-              </Button>
-            </div>
-          </div>
+        <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 mt-4">
+          <Button
+            variant="outline"
+            onClick={() =>
+              window.open(
+                `https://www.google.com/search?q=${encodeURIComponent(
+                  `${flight.airline} ${flight.flightNumber} ${flight.departureDate}`
+                )}`,
+                "_blank"
+              )
+            }
+          >
+            Check Flight Status
+          </Button>
+          <Button
+            onClick={addToMyPlan}
+            className={isAdded ? "bg-green-600 hover:bg-green-700" : ""}
+            disabled={isSubmitting || isAdded}
+          >
+            {isSubmitting ? (
+              <span className="flex items-center">
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                Adding...
+              </span>
+            ) : isAdded ? (
+              <span className="flex items-center">
+                <CheckCircle2 className="h-4 w-4 mr-1" />
+                Added to My Plan
+              </span>
+            ) : (
+              <span className="flex items-center">
+                <Users className="h-4 w-4 mr-1" />
+                Add {quantity > 1 ? `${quantity} tickets` : "to My Plan"}
+              </span>
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

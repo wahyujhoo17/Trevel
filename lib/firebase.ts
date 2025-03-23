@@ -1,49 +1,41 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApp, getApps } from "firebase/app";
 import {
   getAuth,
   GoogleAuthProvider,
   TwitterAuthProvider,
-  setPersistence,
-  browserLocalPersistence,
 } from "firebase/auth";
-import { Analytics, getAnalytics } from "firebase/analytics";
 import { getDatabase } from "firebase/database";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-// Initialize Auth with popup redirect resolver
-export const auth = getAuth(app);
-export const db = getDatabase(app);
-
-// Set persistence only on client side
-if (typeof window !== "undefined") {
-  setPersistence(auth, browserLocalPersistence);
+let app;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
 }
 
-// Configure providers
-export const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: "select_account",
-});
+// Initialize services
+const auth = getAuth(app);
+const db = getDatabase(app);
+const googleProvider = new GoogleAuthProvider();
+const twitterProvider = new TwitterAuthProvider();
 
-export const twitterProvider = new TwitterAuthProvider();
-
-// Initialize Analytics only on client side
-let analytics: Analytics | undefined;
+// Initialize Analytics conditionally
+let analytics;
 if (typeof window !== "undefined") {
-  analytics = getAnalytics(app);
+  isSupported().then((yes) => yes && (analytics = getAnalytics(app)));
 }
 
-export { analytics };
+export { app, db, auth, analytics, googleProvider, twitterProvider };

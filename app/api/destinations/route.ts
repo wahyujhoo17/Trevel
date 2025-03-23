@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { GoogleSearch } from "google-search-results-nodejs";
 import { getCachedData, setCachedData } from "@/utils/cache";
+import { NextApiRequest, NextApiResponse } from "next";
 
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
