@@ -35,27 +35,29 @@ dotenv.config();
 
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
-if (!SERPAPI_KEY) {
-  throw new Error("SERPAPI_KEY is not defined in environment variables");
-}
-
 export async function GET(req: Request) {
+  if (!SERPAPI_KEY) {
+    return NextResponse.json(
+      { error: "API key not configured" },
+      { status: 503 }
+    );
+  }
+
+  const { searchParams } = new URL(req.url);
+  const destination = searchParams.get("destination");
+  const checkIn = searchParams.get("checkIn");
+  const checkOut = searchParams.get("checkOut");
+  const adults = searchParams.get("adults") || "2";
+
+  if (!destination || !checkIn || !checkOut) {
+    return NextResponse.json(
+      { error: "Missing required search parameters" },
+      { status: 400 }
+    );
+  }
+
   try {
-    const { searchParams } = new URL(req.url);
-    const destination = searchParams.get("destination");
-    const checkIn = searchParams.get("checkIn");
-    const checkOut = searchParams.get("checkOut");
-    const adults = searchParams.get("adults") || "2";
-
-    if (!destination || !checkIn || !checkOut) {
-      return NextResponse.json(
-        { error: "Missing required search parameters" },
-        { status: 400 }
-      );
-    }
-
-    // Type the Promise resolution
-    const data: SerpApiResponse = await new Promise((resolve, reject) => {
+    const data: SerpApiResponse = await new Promise((resolve) => {
       getJson(
         {
           engine: "google_hotels",
@@ -72,7 +74,10 @@ export async function GET(req: Request) {
       );
     });
 
-    // Map data with proper typing
+    if (data.error) {
+      return NextResponse.json({ error: data.error }, { status: 429 });
+    }
+
     const hotels = (data?.properties || []).map(
       (property: SerpApiHotelProperty) => ({
         name: property?.name || "Unknown Hotel",
@@ -93,10 +98,17 @@ export async function GET(req: Request) {
       })
     );
 
-    return NextResponse.json({ hotels }, { status: 200 });
-  } catch (error: any) {
+    if (!hotels.length) {
+      return NextResponse.json(
+        { error: "No hotels found for this destination" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ hotels });
+  } catch (error) {
     return NextResponse.json(
-      { error: "Failed to fetch hotels", details: error.message },
+      { error: "Failed to fetch hotels" },
       { status: 500 }
     );
   }

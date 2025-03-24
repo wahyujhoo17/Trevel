@@ -204,6 +204,22 @@ export function HotelDetailModal({
     ? `${hotel.gps_coordinates.latitude},${hotel.gps_coordinates.longitude}`
     : undefined;
 
+  // Add this function at the top of your component
+  const getGoogleMapsUrl = (coordinates: {
+    latitude: number;
+    longitude: number;
+  }) => {
+    return `https://www.google.com/maps/@${coordinates.latitude},${coordinates.longitude},15z?entry=ttu`;
+  };
+
+  // Add this function at the top of your component
+  const getOpenStreetMapUrl = (coordinates: {
+    latitude: number;
+    longitude: number;
+  }) => {
+    return `https://www.openstreetmap.org/?mlat=${coordinates.latitude}&mlon=${coordinates.longitude}&zoom=15`;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
@@ -462,10 +478,51 @@ export function HotelDetailModal({
 
             {/* Location */}
             {hotel?.gps_coordinates && (
-              <div className="mt-4">
-                <h3 className="text-sm font-medium text-gray-900">Location</h3>
-                <p className="text-sm text-gray-500">
-                  {`${hotel.gps_coordinates.latitude}, ${hotel.gps_coordinates.longitude}`}
+              <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                <h3 className="text-base font-medium mb-3 flex items-center">
+                  <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                  Location
+                </h3>
+
+                {/* Map Container */}
+                <div className="relative w-full h-[300px] mb-4 rounded-lg overflow-hidden">
+                  <iframe
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${
+                      hotel.gps_coordinates.longitude - 0.01
+                    }%2C${hotel.gps_coordinates.latitude - 0.01}%2C${
+                      hotel.gps_coordinates.longitude + 0.01
+                    }%2C${
+                      hotel.gps_coordinates.latitude + 0.01
+                    }&layer=mapnik&marker=${hotel.gps_coordinates.latitude}%2C${
+                      hotel.gps_coordinates.longitude
+                    }`}
+                    width="100%"
+                    height="100%"
+                    frameBorder="0"
+                    loading="lazy"
+                    className="absolute inset-0"
+                  />
+                </div>
+
+                {/* View on OpenStreetMap button */}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() =>
+                    window.open(
+                      getOpenStreetMapUrl(hotel.gps_coordinates!),
+                      "_blank"
+                    )
+                  }
+                >
+                  <MapPin className="h-4 w-4 mr-2 text-primary" />
+                  View on OpenStreetMap
+                  <ExternalLink className="h-3 w-3 ml-2 text-gray-400" />
+                </Button>
+
+                <p className="text-xs text-gray-500 mt-2">
+                  Coordinates: {hotel.gps_coordinates.latitude},{" "}
+                  {hotel.gps_coordinates.longitude}
                 </p>
               </div>
             )}

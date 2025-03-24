@@ -33,6 +33,17 @@ import {
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import PaymentModal from "@/components/payment/payment-modal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Add BookingDetails interface
 interface BookingDetails {
@@ -82,6 +93,14 @@ export function FlightPlans({
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [expandedFlight, setExpandedFlight] = useState<string | null>(null);
   const [mounted, setMounted] = useState(true); // For animation purposes
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedFlight, setSelectedFlight] = useState<PlanItem | null>(null);
+  const [flightToDelete, setFlightToDelete] = useState<string | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [flightDetailsToDelete, setFlightDetailsToDelete] = useState({
+    airline: "",
+    flightNumber: "",
+  });
   const router = useRouter();
 
   const toggleExpandFlight = (id: string) => {
@@ -161,21 +180,37 @@ export function FlightPlans({
   };
 
   const handlePayment = async (planId: string) => {
-    setIsProcessing(planId);
-    try {
-      toast.success("Redirecting to payment...", {
-        duration: 2000,
-      });
-      // Simulate payment redirect delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      // Add your payment logic here
-      toast("Payment successful!", {
-        icon: <Check className="h-4 w-4 text-green-500" />,
-      });
-    } catch (error) {
-      toast.error("Payment failed. Please try again.");
-    } finally {
-      setIsProcessing(null);
+    const flight = allFlights.find((plan) => plan.id === planId);
+    if (!flight) return;
+
+    setSelectedFlight(flight);
+    setShowPaymentModal(true);
+  };
+
+  const handleDeleteClick = (
+    planId: string,
+    airline: string,
+    flightNumber: string
+  ) => {
+    setFlightToDelete(planId);
+    setFlightDetailsToDelete({ airline, flightNumber });
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (flightToDelete) {
+      try {
+        await onRemovePlan(flightToDelete);
+        toast.success("Flight removed successfully", {
+          description: `${flightDetailsToDelete.airline} ${flightDetailsToDelete.flightNumber} has been removed from your plans.`,
+        });
+      } catch (error) {
+        toast.error("Failed to remove flight", {
+          description: "Please try again later.",
+        });
+      }
+      setIsDeleteAlertOpen(false);
+      setFlightToDelete(null);
     }
   };
 
@@ -427,33 +462,44 @@ export function FlightPlans({
                                 }`}
                               />
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onRemovePlan(plan.id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Remove
-                            </Button>
-                            <Button
-                              className="bg-primary text-white hover:bg-primary/90 w-full sm:w-auto"
-                              size="sm"
-                              onClick={() => handlePayment(plan.id)}
-                              disabled={isProcessing === plan.id}
-                            >
-                              {isProcessing === plan.id ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  Processing...
-                                </>
-                              ) : (
-                                <>
-                                  <CreditCard className="h-4 w-4 mr-2" />
-                                  Pay Now
-                                </>
-                              )}
-                            </Button>
+
+                            {/* Use a container div for the primary actions */}
+                            <div className="flex gap-2 w-full sm:w-auto">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeleteClick(
+                                    plan.id,
+                                    plan.flight?.airline || "Flight",
+                                    plan.flight?.flightNumber || "Unknown"
+                                  )
+                                }
+                                className="flex-1 sm:flex-none text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Remove
+                              </Button>
+
+                              <Button
+                                className="flex-1 sm:flex-none bg-primary text-white hover:bg-primary/90"
+                                size="sm"
+                                onClick={() => handlePayment(plan.id)}
+                                disabled={isProcessing === plan.id}
+                              >
+                                {isProcessing === plan.id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <CreditCard className="h-4 w-4 mr-2" />
+                                    Pay Now
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -465,6 +511,122 @@ export function FlightPlans({
           </motion.div>
         ))}
       </div>
+      {selectedFlight && selectedFlight.flight && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedFlight(null);
+            setIsProcessing(null);
+          }}
+          amount={
+            calculateBookingDetails(
+              selectedFlight.flight.price,
+              getQuantity(selectedFlight)
+            ).total
+          }
+          itemType="flight"
+          itemDetails={{
+            name: selectedFlight.flight.airline,
+            checkIn: selectedFlight.flight.departureDate,
+            destination: formatLocation(selectedFlight.flight.destination),
+            image: getAirlineInfo(
+              selectedFlight.flight.flightNumber.split(/(\d+)/)[0]
+            )?.logo,
+            departureTime: selectedFlight.flight.departureTime,
+            arrivalTime: selectedFlight.flight.arrivalTime,
+            airline: selectedFlight.flight.airline,
+          }}
+        />
+      )}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="p-2 bg-red-100 rounded-full">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <AlertDialogTitle className="text-lg">
+                Remove Flight
+              </AlertDialogTitle>
+            </div>
+
+            <AlertDialogDescription className="pt-3 space-y-3">
+              <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center">
+                  {getAirlineInfo(
+                    flightDetailsToDelete.flightNumber.split(/(\d+)/)[0]
+                  )?.logo ? (
+                    <Image
+                      src={
+                        getAirlineInfo(
+                          flightDetailsToDelete.flightNumber.split(/(\d+)/)[0]
+                        )?.logo || ""
+                      }
+                      alt={flightDetailsToDelete.airline}
+                      width={24}
+                      height={24}
+                      className="object-contain"
+                    />
+                  ) : (
+                    <Plane className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">
+                    {flightDetailsToDelete.airline}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {flightDetailsToDelete.flightNumber}
+                  </p>
+                </div>
+              </div>
+
+              <p>
+                Are you sure you want to remove this flight from your plans?
+              </p>
+
+              <div className="bg-amber-50 border border-amber-100 rounded-md p-2.5 text-amber-800 flex items-start gap-2">
+                <div className="mt-0.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                </div>
+                <p className="text-sm">
+                  This action cannot be undone and your booking information will
+                  be permanently removed.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="mt-0 border-gray-200">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-red-600 text-white hover:bg-red-700 transition-colors"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Yes, Remove Flight
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

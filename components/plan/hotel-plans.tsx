@@ -17,6 +17,8 @@ import {
   Coffee,
   Utensils,
   Tag,
+  CreditCard,
+  Building,
 } from "lucide-react";
 import Image from "next/image";
 import { formatDate } from "@/utils/format";
@@ -24,6 +26,18 @@ import type { CityGroup, PlanItem } from "@/types/plans";
 import { useRouter } from "next/navigation";
 import { JSX, useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import PaymentModal from "@/components/payment/payment-modal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/use-toast";
 
 interface HotelPlansProps {
   cityGroups: CityGroup[];
@@ -52,6 +66,13 @@ export function HotelPlans({
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [expandedHotel, setExpandedHotel] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState<PlanItem | null>(null);
+  const [hotelToDelete, setHotelToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -67,6 +88,48 @@ export function HotelPlans({
 
   const toggleExpandHotel = (id: string) => {
     setExpandedHotel(expandedHotel === id ? null : id);
+  };
+
+  const handleBooking = (hotel: PlanItem) => {
+    setSelectedHotel(hotel);
+    setShowPaymentModal(true);
+  };
+
+  const calculateTotalCost = (hotel: PlanItem): number => {
+    if (!hotel.checkInDate || !hotel.checkOutDate || !hotel.ratePerNight)
+      return 0;
+
+    const nights = calculateNights(hotel.checkInDate, hotel.checkOutDate);
+    const rate = parseFloat(hotel.ratePerNight.replace(/[^0-9.]/g, ""));
+
+    return nights * rate;
+  };
+
+  const handleDeleteClick = (hotelId: string, hotelName: string) => {
+    setHotelToDelete({ id: hotelId, name: hotelName });
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (hotelToDelete) {
+      try {
+        await onRemovePlan(hotelToDelete.id);
+
+        // Fix for toast - use the correct variant
+        toast({
+          title: "Hotel removed successfully",
+          description: `${hotelToDelete.name} has been removed from your plans.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Error removing hotel",
+          description: "Failed to remove hotel. Please try again.",
+          variant: "destructive",
+        });
+      }
+      setIsDeleteAlertOpen(false);
+      setHotelToDelete(null);
+    }
   };
 
   if (!mounted) {
@@ -290,7 +353,7 @@ export function HotelPlans({
                                 </div>
                               )}
                             </div>
-                            
+
                             {/* Amenities preview */}
                             {Array.isArray(hotel.amenities) &&
                               hotel.amenities.length > 0 && (
@@ -324,45 +387,63 @@ export function HotelPlans({
                                     )}
                                 </div>
                               )}
+                            <div className="mt-3 flex justify-end">
+                              {/* Details toggle button */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleExpandHotel(hotel.id)}
+                                className="text-gray-500 hover:text-gray-700 order-3 sm:order-1"
+                              >
+                                {expandedHotel === hotel.id
+                                  ? "Less details"
+                                  : "More details"}
+                                <ChevronRight
+                                  className={`h-4 w-4 ml-1 transition-transform ${
+                                    expandedHotel === hotel.id
+                                      ? "rotate-90"
+                                      : ""
+                                  }`}
+                                />
+                              </Button>
+                            </div>
                             {/* Action Buttons */}
-                            <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                            <div className="mt-4 pt-4 border-t flex flex-wrap justify-end items-center gap-y-3">
                               {/* Total cost info */}
-                              {hotel.totalCost && (
-                                <div className="flex items-center">
-                                  <Tag className="h-4 w-4 mr-1.5 text-green-600" />
-                                  <span className="text-sm font-medium text-gray-800">
-                                    Total: ${hotel.totalCost}
-                                  </span>
-                                </div>
-                              )}
+                              <div className="flex items-center mr-5">
+                                <Tag className="h-4 w-4 mr-1.5 text-green-600" />
+                                <span className="text-sm font-medium text-gray-800">
+                                  Total: ${calculateTotalCost(hotel)}
+                                </span>
+                              </div>
 
-                              {/* Controls */}
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => toggleExpandHotel(hotel.id)}
-                                  className="text-gray-500 hover:text-gray-700"
-                                >
-                                  {expandedHotel === hotel.id
-                                    ? "Less details"
-                                    : "More details"}
-                                  <ChevronRight
-                                    className={`h-4 w-4 ml-1 transition-transform ${
-                                      expandedHotel === hotel.id
-                                        ? "rotate-90"
-                                        : ""
-                                    }`}
-                                  />
-                                </Button>
+                              {/* Controls - Better organized */}
+                              <div className="m-2 flex items-center gap-2">
+                                {/* Remove button */}
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => onRemovePlan(hotel.id)}
+                                  onClick={() =>
+                                    handleDeleteClick(
+                                      hotel.id,
+                                      hotel.hotelName || "this hotel"
+                                    )
+                                  }
                                   className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Remove
+                                </Button>
+
+                                {/* Book Now button - Pindah ke kanan di mobile */}
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => handleBooking(hotel)}
+                                  className="bg-primary hover:bg-primary/90 text-white ml-auto sm:ml-0"
+                                >
+                                  <CreditCard className="h-4 w-4 mr-1.5" />
+                                  Book Now
                                 </Button>
                               </div>
                             </div>
@@ -377,6 +458,108 @@ export function HotelPlans({
           ))}
         </div>
       )}
+      {selectedHotel && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedHotel(null);
+          }}
+          amount={calculateTotalCost(selectedHotel)}
+          itemType="hotel"
+          itemDetails={{
+            name: selectedHotel.hotelName || "",
+            checkIn: selectedHotel.checkInDate,
+            checkOut: selectedHotel.checkOutDate,
+            nights: calculateNights(
+              selectedHotel.checkInDate || "",
+              selectedHotel.checkOutDate || ""
+            ),
+            ratePerNight: selectedHotel.ratePerNight,
+            destination: selectedHotel.city,
+            image: selectedHotel.mainImage,
+          }}
+        />
+      )}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="p-2 bg-red-100 rounded-full">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <AlertDialogTitle className="text-lg">
+                Remove Hotel
+              </AlertDialogTitle>
+            </div>
+
+            <AlertDialogDescription className="pt-3 space-y-3">
+              {/* Hotel Information Box */}
+              <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center">
+                  {hotelToDelete?.name &&
+                  hotelToDelete.name !== "this hotel" ? (
+                    <div className="h-full w-full flex items-center justify-center">
+                      <Hotel className="h-5 w-5 text-primary" />
+                    </div>
+                  ) : (
+                    <Building className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">
+                    {hotelToDelete?.name || "Unknown Hotel"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Hotel Accommodation
+                  </p>
+                </div>
+              </div>
+
+              <p>Are you sure you want to remove this hotel from your plans?</p>
+
+              {/* Warning Box */}
+              <div className="bg-amber-50 border border-amber-100 rounded-md p-2.5 text-amber-800 flex items-start gap-2">
+                <div className="mt-0.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                </div>
+                <p className="text-sm">
+                  This action cannot be undone and your booking information will
+                  be permanently removed.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="mt-0 border-gray-200">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-red-600 text-white hover:bg-red-700 transition-colors"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Yes, Remove Hotel
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
