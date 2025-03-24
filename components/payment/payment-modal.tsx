@@ -45,14 +45,19 @@ interface PaymentModalProps {
   };
 }
 
-// Update the paymentMethods to use generic icons instead of problematic image URLs
+// Update the paymentMethods object with logos
+
 const paymentMethods = [
   {
     id: "credit-card",
     name: "Credit / Debit Card",
     description: "Pay securely with your card",
     icon: <CreditCard className="h-5 w-5 text-blue-600" />,
-    logos: [], // Remove problematic external images
+    logos: [
+      { src: "/images/payments/visa.png", alt: "Visa" },
+      { src: "/images/payments/mastercard.png", alt: "Mastercard" },
+      { src: "/images/payments/amex.png", alt: "American Express" },
+    ],
   },
   {
     id: "qris",
@@ -66,29 +71,122 @@ const paymentMethods = [
     name: "GoPay",
     description: "Pay with your GoPay balance",
     icon: <Wallet className="h-5 w-5 text-green-500" />,
-    logos: [],
+    logos: [{ src: "/images/payments/gopay.png", alt: "GoPay" }],
   },
   {
     id: "bank-transfer",
     name: "Bank Transfer",
     description: "Transfer from any bank",
     icon: <Building className="h-5 w-5 text-gray-600" />,
-    logos: [],
+    logos: [
+      { src: "/images/payments/bca.png", alt: "BCA" },
+      { src: "/images/payments/mandiri.png", alt: "Mandiri" },
+      { src: "/images/payments/bni.png", alt: "BNI" },
+    ],
   },
 ];
+
+const svgLogos = {
+  visa: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5 text-blue-600"
+    >
+      <path d="M2 12h20" />
+      <path d="M2 12l4-4" />
+      <path d="M2 12l4 4" />
+      <path d="M22 12l-4-4" />
+      <path d="M22 12l-4 4" />
+    </svg>
+  ),
+  mastercard: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5 text-red-600"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2v20" />
+    </svg>
+  ),
+  amex: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5 text-blue-600"
+    >
+      <path d="M2 12h20" />
+      <path d="M2 12l4-4" />
+      <path d="M2 12l4 4" />
+      <path d="M22 12l-4-4" />
+      <path d="M22 12l-4 4" />
+      <path d="M12 2v20" />
+    </svg>
+  ),
+  discover: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5 text-orange-600"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2v20" />
+      <path d="M2 12h20" />
+    </svg>
+  ),
+};
+
+// Update the PaymentLogo component to handle bank logos differently
 
 const PaymentLogo = ({ src, alt }: { src: string; alt: string }) => {
   const [error, setError] = useState(false);
 
+  // Check if this is a bank logo
+  const isBank = ["BCA", "Mandiri", "BNI"].includes(alt);
+
+  // Return SVG logo if we have one matching the alt text, or if there was an error loading the image
+  if (error || !src) {
+    const altLower = alt.toLowerCase();
+    if (altLower === "visa") return svgLogos.visa;
+    if (altLower === "mastercard") return svgLogos.mastercard;
+    if (altLower === "american express" || altLower === "amex")
+      return svgLogos.amex;
+    if (altLower === "discover") return svgLogos.discover;
+
+    // Default fallback
+    return <CreditCard className="h-5 w-5 text-gray-500" />;
+  }
+
   return (
-    <div className="relative w-10 h-6">
+    <div className={`relative ${isBank ? "w-6 h-5" : "w-10 h-6"}`}>
       <Image
-        src={error ? "/images/payments/fallback.png" : src}
+        src={src}
         alt={alt}
         fill
         className="object-contain"
         onError={() => setError(true)}
-        unoptimized // Add this to bypass image optimization for logos
+        unoptimized
       />
     </div>
   );
@@ -126,16 +224,24 @@ const QRCodeDisplay = ({
   );
 };
 
-// Update the BankTransferDetails component to avoid problematic images
+// Update the BankTransferDetails component to use local PNG images
 const BankTransferDetails = ({ amount }: { amount: number }) => {
   const [selectedBank, setSelectedBank] = useState(0);
   const banks = ["BCA", "Mandiri", "BNI"];
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+
+  const handleImageError = (bankName: string) => {
+    setImageErrors((prev) => ({
+      ...prev,
+      [bankName]: true,
+    }));
+  };
 
   return (
     <div className="mt-4 space-y-4">
       <div className="grid grid-cols-3 gap-3">
         {banks.map((bank, index) => (
-          <button
+          <motion.button
             key={bank}
             onClick={() => setSelectedBank(index)}
             className={`p-3 rounded-lg border transition-all ${
@@ -143,10 +249,26 @@ const BankTransferDetails = ({ amount }: { amount: number }) => {
                 ? "border-primary bg-primary/5 ring-1 ring-primary"
                 : "border-gray-200 hover:bg-gray-50"
             }`}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
           >
-            <Building className="h-6 w-6 mx-auto mb-2 text-gray-600" />
-            <p className="text-sm font-medium text-center">{bank}</p>
-          </button>
+            <div className="h-10 w-full mx-auto mb-2 flex items-center justify-center">
+              {imageErrors[bank] ? (
+                <Building className="h-6 w-6 text-gray-600" />
+              ) : (
+                <Image
+                  src={`/images/payments/${bank.toLowerCase()}.png`}
+                  alt={`${bank} logo`}
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                  onError={() => handleImageError(bank)}
+                  unoptimized // Add this to bypass image optimization
+                />
+              )}
+            </div>
+            {/* <p className="text-sm font-medium text-center">{bank}</p> */}
+          </motion.button>
         ))}
       </div>
 
@@ -154,8 +276,26 @@ const BankTransferDetails = ({ amount }: { amount: number }) => {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Bank Name</span>
-            <span className="font-medium">{banks[selectedBank]}</span>
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-5 mr-1">
+                {!imageErrors[banks[selectedBank]] && (
+                  <Image
+                    src={`/images/payments/${banks[
+                      selectedBank
+                    ].toLowerCase()}.png`}
+                    alt={`${banks[selectedBank]} logo`}
+                    width={20}
+                    height={20}
+                    className="object-contain"
+                    onError={() => handleImageError(banks[selectedBank])}
+                    unoptimized
+                  />
+                )}
+              </div>
+              <span className="font-medium">{banks[selectedBank]}</span>
+            </div>
           </div>
+
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Account Number</span>
             <div className="flex items-center gap-2">
@@ -192,10 +332,12 @@ const BankTransferDetails = ({ amount }: { amount: number }) => {
               </Button>
             </div>
           </div>
+
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Account Name</span>
             <span className="font-medium">PT TRAVEL COMPANY</span>
           </div>
+
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Amount to Transfer</span>
             <span className="font-bold text-primary">
@@ -791,8 +933,25 @@ const PaymentModal = ({
                           >
                             {method.icon}
                           </motion.div>
-                          <div>
-                            <span className="font-medium">{method.name}</span>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium">{method.name}</span>
+                              {method.logos.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  {method.logos.map((logo, i) => (
+                                    <div
+                                      key={i}
+                                      className="relative h-6 w-6 flex items-center justify-center"
+                                    >
+                                      <PaymentLogo
+                                        src={logo.src}
+                                        alt={logo.alt}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-500 mt-0.5">
                               {method.description}
                             </p>
