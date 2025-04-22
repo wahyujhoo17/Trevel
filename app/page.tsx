@@ -11,6 +11,8 @@ import {
   Loader2,
   Star,
   DollarSign,
+  Hotel, // Added Hotel icon
+  ExternalLink, // Added ExternalLink icon
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -20,19 +22,23 @@ import { AuthModal } from "@/components/auth-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/navbar";
 import { FlightResults } from "@/components/flight-results";
-import { format } from "date-fns"; // Add this import at the top
+import { format } from "date-fns";
 import { getAirlineName, getAirlineInfo } from "@/utils/airlines";
 import { link } from "node:fs";
-import { useRouter } from "next/navigation"; // Add this import
-import { toast } from "sonner"; // Add toast import if not already present
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Plane, Hotel, ExternalLink } from "lucide-react";
-import { locations } from "@/data/locations"; // First, import the locations data
+import { Plane } from "lucide-react"; // Keep Plane icon
+import { locations } from "@/data/locations";
+import destinationJson from "@/data/destination.json"; // Import the JSON data directly
 import { Destination } from "@/types/destination";
 import { DateRange } from "react-day-picker";
 import { CustomDateRange, DateRangeProps } from "@/types/date";
 import { getRedirectResult } from "firebase/auth";
-import { auth } from "@/lib/firebase"; // Add this at the top with other imports
+import { auth } from "@/lib/firebase";
+
+// Access the data array from the imported JSON
+const destinationData: Destination[] = destinationJson.data;
 
 export default function Home() {
   const [origin, setOrigin] = useState("SIN");
@@ -46,38 +52,7 @@ export default function Home() {
   const [flights, setFlights] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const router = useRouter(); // Add this
-  const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [isLoadingDestinations, setIsLoadingDestinations] = useState(true);
-
-  useEffect(() => {
-    const fetchDestinations = async () => {
-      try {
-        setIsLoadingDestinations(true);
-        const response = await fetch("/api/destinations");
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("API Error:", errorData);
-          throw new Error(errorData.error || "Failed to fetch destinations");
-        }
-
-        const data = await response.json();
-        if (!Array.isArray(data)) {
-          throw new Error("Invalid response format");
-        }
-
-        setDestinations(data as Destination[]);
-      } catch (error) {
-        console.error("Fetch error:", error);
-        toast.error("Failed to load destinations. Please try again later.");
-      } finally {
-        setIsLoadingDestinations(false);
-      }
-    };
-
-    fetchDestinations();
-  }, []);
+  const router = useRouter();
 
   useEffect(() => {
     // Handle redirect result
@@ -98,7 +73,6 @@ export default function Home() {
     if (!user) {
       setShowAuthModal(true);
     } else {
-      // Use Next.js router instead of window.location
       router.push("/my-plan");
     }
   };
@@ -109,7 +83,6 @@ export default function Home() {
       return;
     }
 
-    // Check for missing inputs and show specific notifications
     if (!origin) {
       toast.error("Missing departure city", {
         description: "Please select where you're flying from",
@@ -142,14 +115,12 @@ export default function Home() {
         returnDate: date.to ? format(date.to, "yyyy-MM-dd") : undefined,
       });
 
-      // Create params object first
       const params: Record<string, string> = {
         origin,
         destination,
         departureDate: format(date.from!, "yyyy-MM-dd"),
       };
 
-      // Add returnDate only if date.to exists
       if (date.to) {
         params.returnDate = format(date.to, "yyyy-MM-dd");
       }
@@ -165,7 +136,6 @@ export default function Home() {
       const rawData = await response.json();
       console.log("Flight search results:", rawData);
 
-      // Transform the API response into our Flight interface
       const transformedFlights = rawData.data.map((offer: any) => {
         const segment = offer.itineraries[0].segments[0];
         const departureDate = new Date(segment.departure.at);
@@ -173,7 +143,7 @@ export default function Home() {
 
         return {
           id: offer.id,
-          airline: getAirlineName(segment.carrierCode), // Update this line
+          airline: getAirlineName(segment.carrierCode),
           flightNumber: `${segment.carrierCode}${segment.number}`,
           origin: segment.departure.iataCode,
           destination: segment.arrival.iataCode,
@@ -239,25 +209,9 @@ export default function Home() {
   };
 
   const renderDestinations = () => {
-    if (isLoadingDestinations) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[...Array(9)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-gray-200 h-64 rounded-lg"></div>
-              <div className="mt-4 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {destinations.map((destination) => (
+        {destinationData.map((destination) => (
           <Card
             key={destination.id}
             className="group overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
@@ -313,7 +267,6 @@ export default function Home() {
                 <Button
                   className="flex-1 bg-primary text-white hover:bg-primary/90"
                   onClick={() => {
-                    // Find the matching location data
                     const locationData = locations.find(
                       (loc) =>
                         loc.city
@@ -321,20 +274,35 @@ export default function Home() {
                           .includes(destination.name.toLowerCase()) ||
                         loc.name
                           .toLowerCase()
-                          .includes(destination.name.toLowerCase())
+                          .includes(destination.name.toLowerCase()) ||
+                        (destination.name ===
+                          "Federal Territory of Kuala Lumpur" &&
+                          loc.city === "Kuala Lumpur") ||
+                        (destination.name === "Hội An" && loc.code === "DAD") ||
+                        (destination.name === "Hạ Long Bay" &&
+                          loc.code === "HPH")
                     );
 
                     if (locationData) {
-                      // Set the destination to the airport code
                       setDestination(locationData.code);
-                      // Scroll to search section
                       document
                         .getElementById("search-section")
                         ?.scrollIntoView({
                           behavior: "smooth",
                         });
                     } else {
-                      toast.error("Airport not found for this destination");
+                      toast.error(
+                        `Airport code not found for ${destination.name}. Please select manually.`
+                      );
+                      console.warn(
+                        "No matching location found for:",
+                        destination.name
+                      );
+                      document
+                        .getElementById("search-section")
+                        ?.scrollIntoView({
+                          behavior: "smooth",
+                        });
                     }
                   }}
                 >
@@ -412,6 +380,7 @@ export default function Home() {
             <Button
               className="h-full bg-primary hover:bg-primary/90"
               onClick={handleSearch}
+              disabled={isSearching}
             >
               {isSearching ? (
                 <div className="flex items-center">
@@ -420,7 +389,7 @@ export default function Home() {
                 </div>
               ) : (
                 <>
-                  <PlanePilot className="mr-2" />
+                  <PlanePilot className="mr-2 h-4 w-4" />
                   Search
                 </>
               )}
@@ -429,7 +398,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Add after the search section */}
+      {/* Flight Results Section */}
       <section className="max-w-6xl mx-auto py-8 px-4">
         <FlightResults
           flights={flights}
@@ -440,12 +409,14 @@ export default function Home() {
 
       {/* Popular Destinations */}
       <section className="max-w-6xl mx-auto py-20 px-4">
-        <h2 className="text-3xl font-bold mb-8">Popular Destinations</h2>
+        <h2 className="text-3xl font-bold mb-8 text-center md:text-left">
+          Popular Destinations
+        </h2>
         {renderDestinations()}
       </section>
 
-      {/* Add Copyright Section */}
-      <footer className="bg-gray-50 py-6">
+      {/* Footer Section */}
+      <footer className="bg-gray-50 py-6 mt-16">
         <div className="max-w-6xl mx-auto px-4 text-center text-gray-600 text-sm">
           © {new Date().getFullYear()} TripPlaner by BagusWS. All rights
           reserved.
